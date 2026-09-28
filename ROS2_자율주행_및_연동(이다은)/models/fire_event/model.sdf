@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="fire_event">
+    <static>true</static>
+    <link name="flame">
+      <!-- Visual-only: a detected fire must not become a physical obstacle. -->
+      <visual name="outer_red_flame">
+        <geometry><mesh><uri>model://fire_event/meshes/flame.obj</uri><scale>0.9 0.9 0.9</scale></mesh></geometry>
+        <material><ambient>1 0.03 0.01 1</ambient><diffuse>1 0.03 0.01 1</diffuse><emissive>0.9 0.02 0 1</emissive></material>
+      </visual>
+      <visual name="middle_orange_flame">
+        <pose>0 -0.075 0.02 0 0 0</pose>
+        <geometry><mesh><uri>model://fire_event/meshes/flame.obj</uri><scale>0.65 0.65 0.65</scale></mesh></geometry>
+        <material><ambient>1 0.28 0 1</ambient><diffuse>1 0.28 0 1</diffuse><emissive>1 0.2 0 1</emissive></material>
+      </visual>
+      <visual name="inner_yellow_flame">
+        <pose>0 -0.11 0.02 0 0 0</pose>
+        <geometry><mesh><uri>model://fire_event/meshes/flame.obj</uri><scale>0.38 0.38 0.38</scale></mesh></geometry>
+        <material><ambient>1 0.75 0.02 1</ambient><diffuse>1 0.75 0.02 1</diffuse><emissive>1 0.65 0 1</emissive></material>
+      </visual>
+    </link>
+  </model>
+</sdf>

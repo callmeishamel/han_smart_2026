@@ -1,0 +1,12 @@
+# ai_inference_sender.py 실행 환경 (Jetson / Docker 컨테이너) 의존성
+# nanoowl, torch는 NVIDIA Jetson용 특수 빌드가 필요해 일반 pip install로는 설치되지
+# 않습니다 (Jetson L4T 컨테이너 이미지에 이미 포함되어 있는 것을 전제로 합니다).
+# 아래는 그 외 pip으로 설치 가능한 나머지 의존성입니다.
+opencv-python
+numpy
+Pillow
+
+# torch        # Jetson: NVIDIA 제공 wheel 사용 (pip 일반 배포판 아님)
+# nanoowl      # Jetson: https://github.com/NVIDIA-AI-IOT/nanoowl 참고, 컨테이너 내 사전 설치 전제
+
+# vision_inference_node.py (ROS2 브릿지)는 pip이 아니라 ROS2(rclpy) 환경이 필요합니다.

@@ -1,0 +1,43 @@
+# 줄바꿈 고정
+#
+# 왜 필요한가
+# ----------
+# 이 저장소는 Windows(상민님 PC)에서 편집하고, 리눅스(젯슨·다은님 노트북)에서
+# 실행합니다. git 설정이 core.autocrlf=true 라, 저장소에는 LF 로 들어 있어도
+# **Windows 워킹트리에서는 CRLF 로 바뀝니다.**
+#
+# git clone 으로 리눅스에 받으면 다시 LF 가 되므로 문제가 없습니다. 그런데
+# 배포 안내는 `scp` 로 파일을 복사하도록 되어 있습니다. 그러면 Windows 워킹트리의
+# CRLF 가 그대로 젯슨으로 넘어가고, 셸 스크립트는 이렇게 죽습니다.
+#
+#     $ ./run_pipeline.sh
+#     bash: ./run_pipeline.sh: /bin/bash^M: bad interpreter: No such file or directory
+#
+# 커널이 shebang 을 "/bin/bash\r" 로 읽기 때문이고, 파일 내용만 봐서는 원인이
+# 보이지 않습니다. 아래 규칙은 Windows 워킹트리에서도 LF 를 유지시켜
+# scp 로 복사해도 그대로 돌게 합니다.
+
+# 리눅스에서 실행되는 것 — shebang 때문에 반드시 LF 여야 합니다.
+*.sh    text eol=lf
+
+# 파이썬은 줄바꿈에 관대하지만(universal newlines), 젯슨으로 scp 하는 파일이
+# 섞여 있어 통일해 둡니다.
+*.py    text eol=lf
+
+# Cartographer 설정. 리눅스에서만 읽습니다.
+*.lua   text eol=lf
+
+# Windows 에서만 실행되는 배치 파일은 반대로 CRLF 가 맞습니다.
+*.bat   text eol=crlf
+
+# 바이너리 — git 이 줄바꿈 변환을 시도하면 파일이 깨집니다.
+# .pgm 은 P5(바이너리) 형식이라 특히 위험합니다. 지금은 git 이 휴리스틱으로
+# 바이너리라고 잘 맞히고 있지만, 명시해 두면 추측에 기대지 않습니다.
+*.pgm   binary
+*.png   binary
+*.jpg   binary
+*.onnx  binary
+*.npz   binary
+*.engine binary
+*.xlsx  binary
+*.pptx  binary

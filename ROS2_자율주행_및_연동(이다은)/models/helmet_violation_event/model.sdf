@@ -1,0 +1,39 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="helmet_violation_event">
+    <static>true</static>
+    <link name="worker_no_helmet">
+      <!-- Red body + bare head + red X: helmet violation. -->
+      <visual name="torso">
+        <pose>0 0 1.05 0 0 0</pose>
+        <geometry><box><size>0.42 0.25 0.65</size></box></geometry>
+        <material><ambient>0.95 0.12 0.03 1</ambient><diffuse>0.95 0.12 0.03 1</diffuse></material>
+      </visual>
+      <visual name="head">
+        <pose>0 0 1.53 0 0 0</pose>
+        <geometry><sphere><radius>0.18</radius></sphere></geometry>
+        <material><ambient>0.86 0.62 0.46 1</ambient><diffuse>0.86 0.62 0.46 1</diffuse></material>
+      </visual>
+      <visual name="left_leg">
+        <pose>-0.12 0 0.42 0 0 0</pose>
+        <geometry><cylinder><radius>0.07</radius><length>0.8</length></cylinder></geometry>
+        <material><ambient>0.1 0.12 0.18 1</ambient><diffuse>0.1 0.12 0.18 1</diffuse></material>
+      </visual>
+      <visual name="right_leg">
+        <pose>0.12 0 0.42 0 0 0</pose>
+        <geometry><cylinder><radius>0.07</radius><length>0.8</length></cylinder></geometry>
+        <material><ambient>0.1 0.12 0.18 1</ambient><diffuse>0.1 0.12 0.18 1</diffuse></material>
+      </visual>
+      <visual name="no_helmet_x1">
+        <pose>0 -0.05 1.9 0 0.78 0</pose>
+        <geometry><box><size>0.42 0.06 0.06</size></box></geometry>
+        <material><ambient>1 0 0 1</ambient><diffuse>1 0 0 1</diffuse><emissive>0.6 0 0 1</emissive></material>
+      </visual>
+      <visual name="no_helmet_x2">
+        <pose>0 -0.05 1.9 0 -0.78 0</pose>
+        <geometry><box><size>0.42 0.06 0.06</size></box></geometry>
+        <material><ambient>1 0 0 1</ambient><diffuse>1 0 0 1</diffuse><emissive>0.6 0 0 1</emissive></material>
+      </visual>
+    </link>
+  </model>
+</sdf>

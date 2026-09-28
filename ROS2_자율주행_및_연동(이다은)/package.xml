@@ -1,0 +1,53 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>smart_factory_sim</name>
+  <version>0.0.1</version>
+  <description>Smart Factory simulation with TurtleBot3 Nav2 and event detection</description>
+  <maintainer email="leedaeun@todo.todo">leedaeun</maintainer>
+  <license>Apache-2.0</license>
+
+  <depend>rclpy</depend>
+  <depend>sensor_msgs</depend>
+  <depend>geometry_msgs</depend>
+  <depend>turtlebot3_msgs</depend>
+  <depend>visualization_msgs</depend>
+  <depend>nav2_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>cv_bridge</depend>
+  <depend>std_msgs</depend>
+  <!-- event_detector.py 가 mock 모드(기본값)에서 /gazebo/model_states 를 구독한다.
+       gazebo_ros 가 설치돼 있으면 따라 들어오지만, rosdep 이 보장하도록 명시한다. -->
+  <depend>gazebo_msgs</depend>
+  <!-- nav_msgs: OccupancyGrid(미니맵) + Odometry(실물 Cartographer 필터) -->
+  <depend>nav_msgs</depend>
+  <!-- action_msgs: GoalStatus (patrol_node.py 가 목표 성공/실패를 판정) -->
+  <depend>action_msgs</depend>
+
+  <!-- Python 노드와 launch 파일에서 직접 import하는 런타임 의존성 -->
+  <exec_depend>ament_index_python</exec_depend>
+  <exec_depend>launch</exec_depend>
+  <exec_depend>launch_ros</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
+  <exec_depend>python3-opencv</exec_depend>
+
+  <!-- launch 파일이 실행 시점에 필요로 하는 것들 -->
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>gazebo_ros</exec_depend>
+  <exec_depend>nav2_bringup</exec_depend>
+  <!-- real_cartographer.launch.py와 지도 저장 실행기가 직접 호출한다. -->
+  <exec_depend>cartographer_ros</exec_depend>
+  <exec_depend>turtlebot3_cartographer</exec_depend>
+  <exec_depend>nav2_map_server</exec_depend>
+  <exec_depend>nav2_lifecycle_manager</exec_depend>
+  <exec_depend>rviz2</exec_depend>
+
+  <test_depend>ament_copyright</test_depend>
+  <test_depend>ament_flake8</test_depend>
+  <test_depend>ament_pep257</test_depend>
+  <test_depend>python3-pytest</test_depend>
+
+  <export>
+    <build_type>ament_python</build_type>
+  </export>
+</package>

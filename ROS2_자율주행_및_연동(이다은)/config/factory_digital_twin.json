@@ -1,0 +1,51 @@
+{
+  "map_yaml": "/home/<user>/factory_map_auto.yaml",
+  "source_map": "factory_map_auto.yaml",
+  "source_image": "factory_map_auto.pgm",
+  "resolution": 0.05,
+  "origin": [
+    -0.916,
+    -1.01,
+    0.0
+  ],
+  "width_cells": 134,
+  "height_cells": 147,
+  "wall_height": 2.0,
+  "occupied_cells_source": 886,
+  "occupied_cells_used": 877,
+  "filtered_noise_cells": 9,
+  "free_cells": 5153,
+  "unknown_cells": 13659,
+  "wall_rectangles": 233,
+  "spawn": {
+    "x": 2.509,
+    "y": 3.065,
+    "yaw": 1.0767
+  },
+  "events": {
+    "fire": {
+      "x": 3.709,
+      "y": 4.665,
+      "z": 0.5
+    },
+    "helmet_violation": {
+      "x": 3.209,
+      "y": 5.015,
+      "z": 0.0
+    }
+  },
+  "waypoints": [
+    2.509,
+    3.065,
+    -2.2094,
+    0.059,
+    -0.235,
+    0.8288,
+    5.009,
+    5.165,
+    -2.5783,
+    0.259,
+    2.165,
+    0.3805
+  ]
+}

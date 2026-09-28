@@ -1,0 +1,31 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <world name="factory_mapped_digital_twin">
+    <plugin name="gazebo_ros_state" filename="libgazebo_ros_state.so">
+      <ros><namespace>/gazebo</namespace></ros>
+      <update_rate>10.0</update_rate>
+    </plugin>
+    <physics name="factory_physics" type="ode">
+      <max_step_size>0.001</max_step_size>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+    <scene>
+      <ambient>0.45 0.45 0.45 1</ambient>
+      <background>0.72 0.75 0.80 1</background>
+      <shadows>true</shadows>
+    </scene>
+    <include><uri>model://sun</uri></include>
+    <include><uri>model://ground_plane</uri></include>
+    <include>
+      <uri>model://factory_map_twin</uri>
+      <name>factory_map_twin</name>
+    </include>
+    <gui fullscreen="0">
+      <camera name="user_camera">
+        <pose>2.4340 -3.5825
+              8.4525 0 0.85 1.57</pose>
+        <view_controller>orbit</view_controller>
+      </camera>
+    </gui>
+  </world>
+</sdf>

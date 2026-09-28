@@ -1,0 +1,1856 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="순찰로봇 시스템 2026-08-28~08-29 수정사항과 기기별 배포 절차.">
+<title>순찰로봇 배포 안내</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+KR:wght@300;400;500;600;700&display=swap">
+
+<style>
+
+/* ── 단독 실행용 최소 리셋 (아티팩트 런타임이 넣어 주던 것) ── */
+*,*::before,*::after{box-sizing:border-box;}
+dl,dd,figure{margin:0;}
+img{max-width:100%;height:auto;}
+/* ─────────────────────────────────────────────────────────────
+   순찰로봇 배포 안내 — 2026-08-28 ~ 08-29
+   팔레트는 이 시스템이 실제로 쓰는 미니맵 토큰에서 가져왔습니다.
+   ───────────────────────────────────────────────────────────── */
+:root{
+  --ground:#F6F7F9;
+  --surface:#FFFFFF;
+  --surface-sunk:#EFF2F6;
+  --ink:#151B23;
+  --ink-soft:#3D4956;
+  --muted:#66727F;
+  --line:#DCE2E9;
+  --line-soft:#E9EDF2;
+
+  --accent:#1B62C4;
+  --accent-soft:#E7F0FC;
+
+  --ok:#1C7A4C;
+  --ok-soft:#E3F3EA;
+  --warn:#9A6200;
+  --warn-soft:#FCF1DC;
+  --danger:#B23A2B;
+  --danger-soft:#FBE9E6;
+
+  /* 기기 구분 — 문서 전체를 관통하는 축 */
+  --m-jetson:#A85B22;
+  --m-jetson-soft:#F9EDE2;
+  --m-daeun:#1B62C4;
+  --m-daeun-soft:#E7F0FC;
+  --m-sangmin:#5E4497;
+  --m-sangmin-soft:#EFEBF8;
+
+  /* 작업 묶음(날짜) 구분 */
+  --day1:#5A6675;
+  --day1-soft:#EDF0F4;
+  --day2:#1C7A4C;
+  --day2-soft:#E3F3EA;
+  --day3:#8A4C1F;
+  --day3-soft:#F9EDE2;
+  --day4:#8E3A5B;
+  --day4-soft:#F8E8EE;
+
+  --shadow:0 1px 2px rgba(21,27,35,.05), 0 4px 14px rgba(21,27,35,.045);
+
+  --sans:"IBM Plex Sans KR", system-ui, -apple-system, "Malgun Gothic", sans-serif;
+  --mono:"IBM Plex Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0D1218;
+    --surface:#151C25;
+    --surface-sunk:#101720;
+    --ink:#E6EBF1;
+    --ink-soft:#C2CCD8;
+    --muted:#8B99A8;
+    --line:#26313D;
+    --line-soft:#1D2732;
+
+    --accent:#6BA5F2;
+    --accent-soft:#152742;
+
+    --ok:#5CC08B;
+    --ok-soft:#12291E;
+    --warn:#D9A040;
+    --warn-soft:#2C2213;
+    --danger:#E8796A;
+    --danger-soft:#301A17;
+
+    --m-jetson:#DF9257;
+    --m-jetson-soft:#2B1F14;
+    --m-daeun:#6BA5F2;
+    --m-daeun-soft:#152742;
+    --m-sangmin:#A992DD;
+    --m-sangmin-soft:#221B33;
+
+    --day1:#93A0B0;
+    --day1-soft:#1A222C;
+    --day2:#5CC08B;
+    --day2-soft:#12291E;
+    --day3:#DF9257;
+    --day3-soft:#2B1F14;
+    --day4:#E28BA9;
+    --day4-soft:#2C1720;
+
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.3);
+  }
+}
+
+:root[data-theme="dark"]{
+  --ground:#0D1218;
+  --surface:#151C25;
+  --surface-sunk:#101720;
+  --ink:#E6EBF1;
+  --ink-soft:#C2CCD8;
+  --muted:#8B99A8;
+  --line:#26313D;
+  --line-soft:#1D2732;
+
+  --accent:#6BA5F2;
+  --accent-soft:#152742;
+
+  --ok:#5CC08B;
+  --ok-soft:#12291E;
+  --warn:#D9A040;
+  --warn-soft:#2C2213;
+  --danger:#E8796A;
+  --danger-soft:#301A17;
+
+  --m-jetson:#DF9257;
+  --m-jetson-soft:#2B1F14;
+  --m-daeun:#6BA5F2;
+  --m-daeun-soft:#152742;
+  --m-sangmin:#A992DD;
+  --m-sangmin-soft:#221B33;
+
+  --day1:#93A0B0;
+  --day1-soft:#1A222C;
+  --day2:#5CC08B;
+  --day2-soft:#12291E;
+  --day3:#DF9257;
+  --day3-soft:#2B1F14;
+  --day4:#E28BA9;
+  --day4-soft:#2C1720;
+
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.3);
+}
+
+*{box-sizing:border-box;}
+
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-weight:400;
+  font-size:16px;
+  line-height:1.72;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ── 레이아웃 ───────────────────────────────────────────── */
+.wrap{ max-width:1180px; margin:0 auto; padding:0 28px 96px; }
+.shell{ display:grid; grid-template-columns:212px minmax(0,1fr); gap:56px; align-items:start; }
+@media (max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr);gap:0;}
+  .rail{display:none;}
+  .wrap{padding:0 20px 72px;}
+}
+
+/* ── 머리말 ─────────────────────────────────────────────── */
+.masthead{ border-bottom:1px solid var(--line); margin-bottom:44px; padding:52px 0 30px; }
+.eyebrow{
+  font-family:var(--mono); font-size:11.5px; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--muted); margin:0 0 14px;
+}
+h1{
+  font-size:clamp(30px,4.4vw,44px); font-weight:600; line-height:1.18;
+  letter-spacing:-.022em; margin:0 0 16px; text-wrap:balance;
+}
+.lede{ font-size:17px; color:var(--ink-soft); max-width:62ch; margin:0 0 26px; font-weight:300; }
+.facts{
+  display:flex; flex-wrap:wrap; gap:0; border:1px solid var(--line);
+  border-radius:8px; overflow:hidden; background:var(--surface);
+  width:fit-content; max-width:100%;
+}
+.fact{ padding:11px 20px; border-right:1px solid var(--line); display:flex; flex-direction:column; gap:1px; }
+.fact:last-child{border-right:none;}
+.fact dt{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--muted);
+}
+.fact dd{
+  margin:0; font-family:var(--mono); font-size:14px; font-weight:500;
+  font-variant-numeric:tabular-nums;
+}
+
+/* ── 사이드 네비 ────────────────────────────────────────── */
+.rail{ position:sticky; top:36px; padding-top:4px; }
+.rail h2{
+  font-family:var(--mono); font-size:10.5px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--muted); margin:0 0 12px; font-weight:500;
+}
+.rail ol{ list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:1px; }
+.rail a{
+  display:grid; grid-template-columns:20px 1fr; gap:8px; align-items:baseline;
+  padding:6px 8px; border-radius:5px; color:var(--ink-soft); text-decoration:none;
+  font-size:14px; line-height:1.4; border-left:2px solid transparent;
+}
+.rail a span{ font-family:var(--mono); font-size:11.5px; color:var(--muted); }
+.rail a:hover{background:var(--surface-sunk);color:var(--ink);}
+.rail a:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+
+/* ── 섹션 ───────────────────────────────────────────────── */
+section{scroll-margin-top:24px;}
+section + section{margin-top:64px;}
+.sec-head{
+  display:flex; align-items:baseline; gap:12px; flex-wrap:wrap;
+  border-bottom:1px solid var(--line); padding-bottom:10px; margin-bottom:26px;
+}
+.sec-num{
+  font-family:var(--mono); font-size:13px; font-weight:600;
+  color:var(--accent); font-variant-numeric:tabular-nums;
+}
+h2.sec-title{ font-size:23px; font-weight:600; letter-spacing:-.014em; margin:0; text-wrap:balance; }
+h3{ font-size:17.5px; font-weight:600; letter-spacing:-.008em; margin:38px 0 12px; text-wrap:balance; }
+h4{ font-size:15px; font-weight:600; margin:26px 0 8px; color:var(--ink); }
+p{margin:0 0 14px;max-width:68ch;}
+p.wide{max-width:none;}
+ul,ol.prose{margin:0 0 16px;padding-left:22px;max-width:66ch;}
+li{margin-bottom:5px;}
+strong{font-weight:600;}
+a{color:var(--accent);}
+
+code{
+  font-family:var(--mono); font-size:.875em; background:var(--surface-sunk);
+  border:1px solid var(--line-soft); border-radius:4px; padding:.1em .38em;
+  word-break:break-word;
+}
+pre{
+  font-family:var(--mono); font-size:13px; line-height:1.68;
+  background:var(--surface-sunk); border:1px solid var(--line);
+  border-radius:8px; padding:15px 18px; margin:0 0 18px; overflow-x:auto;
+}
+pre code{background:none;border:none;padding:0;font-size:inherit;}
+.cmt{color:var(--muted);}
+.term{ background:var(--surface-sunk); border-left:3px solid var(--ok); }
+
+/* ── 표 ─────────────────────────────────────────────────── */
+.tw{
+  overflow-x:auto; border:1px solid var(--line); border-radius:8px;
+  background:var(--surface); margin:0 0 20px;
+}
+table{ border-collapse:collapse; width:100%; font-size:14.5px; min-width:460px; }
+th,td{
+  text-align:left; padding:10px 16px; border-bottom:1px solid var(--line-soft);
+  vertical-align:top; line-height:1.6;
+}
+thead th{
+  font-family:var(--mono); font-size:11px; letter-spacing:.07em;
+  text-transform:uppercase; color:var(--muted); font-weight:500;
+  background:var(--surface-sunk); border-bottom:1px solid var(--line); white-space:nowrap;
+}
+tbody tr:last-child td{border-bottom:none;}
+td.num{font-family:var(--mono);font-variant-numeric:tabular-nums;white-space:nowrap;}
+td.file{font-family:var(--mono);font-size:13px;word-break:break-all;}
+
+/* ── 배지 ───────────────────────────────────────────────── */
+.badge{
+  display:inline-flex; align-items:center; gap:6px; font-family:var(--mono);
+  font-size:11.5px; font-weight:500; letter-spacing:.03em;
+  padding:3px 9px; border-radius:20px; white-space:nowrap;
+}
+.badge::before{ content:""; width:6px;height:6px; border-radius:50%; background:currentColor; }
+.b-jetson{color:var(--m-jetson);background:var(--m-jetson-soft);}
+.b-daeun{color:var(--m-daeun);background:var(--m-daeun-soft);}
+.b-sangmin{color:var(--m-sangmin);background:var(--m-sangmin-soft);}
+
+.day{
+  display:inline-block; font-family:var(--mono); font-size:11px; font-weight:500;
+  letter-spacing:.03em; padding:2px 8px; border-radius:4px; white-space:nowrap;
+}
+.d1{color:var(--day1);background:var(--day1-soft);}
+.d2{color:var(--day2);background:var(--day2-soft);}
+.d3{color:var(--day3);background:var(--day3-soft);}
+.d4{color:var(--day4);background:var(--day4-soft);}
+
+.tag{
+  display:inline-block; font-family:var(--mono); font-size:11px; font-weight:500;
+  letter-spacing:.04em; padding:2px 7px; border-radius:4px; white-space:nowrap;
+}
+.t-new{color:var(--ok);background:var(--ok-soft);}
+.t-mod{color:var(--muted);background:var(--surface-sunk);}
+
+/* ── 기기 카드 ──────────────────────────────────────────── */
+.machine{
+  background:var(--surface); border:1px solid var(--line);
+  border-left:3px solid var(--mc,var(--accent)); border-radius:8px;
+  padding:20px 22px; margin-bottom:18px; box-shadow:var(--shadow);
+}
+.machine.jetson{--mc:var(--m-jetson);}
+.machine.daeun{--mc:var(--m-daeun);}
+.machine.sangmin{--mc:var(--m-sangmin);}
+.machine-top{ display:flex; flex-wrap:wrap; align-items:center; gap:12px; margin-bottom:6px; }
+.machine-top h3{margin:0;font-size:17px;}
+.machine .tw{margin-top:14px;margin-bottom:0;}
+.machine p{margin-bottom:0;}
+.machine p + p{margin-top:10px;}
+
+/* ── 절차 스텝 ──────────────────────────────────────────── */
+.step{
+  display:grid; grid-template-columns:44px minmax(0,1fr); gap:20px;
+  padding-bottom:34px; margin-bottom:34px; border-bottom:1px solid var(--line-soft);
+}
+.step:last-child{border-bottom:none;margin-bottom:0;padding-bottom:0;}
+.step-mark{
+  font-family:var(--mono); font-size:15px; font-weight:600;
+  font-variant-numeric:tabular-nums; width:44px;height:44px;
+  display:grid;place-items:center; border:1px solid var(--line);
+  border-radius:7px; background:var(--surface); color:var(--accent);
+}
+.step-body{min-width:0;}
+.step-body > h3{margin-top:0;}
+.step-body > :last-child{margin-bottom:0;}
+@media (max-width:560px){
+  .step{grid-template-columns:minmax(0,1fr);gap:12px;}
+  .step-mark{width:38px;height:38px;font-size:14px;}
+}
+
+/* ── 콜아웃 ─────────────────────────────────────────────── */
+.note{
+  border:1px solid var(--line); border-left:3px solid var(--nc,var(--muted));
+  border-radius:7px; background:var(--ns,var(--surface));
+  padding:14px 18px; margin:0 0 18px;
+}
+.note > :last-child{margin-bottom:0;}
+.note .note-label{
+  font-family:var(--mono); font-size:10.5px; font-weight:600; letter-spacing:.1em;
+  text-transform:uppercase; color:var(--nc,var(--muted)); display:block; margin-bottom:5px;
+}
+.n-warn{--nc:var(--warn);--ns:var(--warn-soft);}
+.n-trap{--nc:var(--danger);--ns:var(--danger-soft);}
+.n-pass{--nc:var(--ok);--ns:var(--ok-soft);}
+.n-info{--nc:var(--accent);--ns:var(--accent-soft);}
+
+/* ── 원인 블록 ──────────────────────────────────────────── */
+.cause{
+  background:var(--surface); border:1px solid var(--line); border-radius:9px;
+  padding:22px 24px; margin-bottom:20px; box-shadow:var(--shadow);
+}
+.cause > h3{margin-top:0;}
+.cause > :last-child{margin-bottom:0;}
+.arrow{
+  display:block; border-top:1px dashed var(--line); padding-top:14px;
+  margin-top:16px; color:var(--ink-soft);
+}
+.arrow::before{ content:"→ "; color:var(--accent); font-weight:600; }
+
+/* ── 각주 ───────────────────────────────────────────────── */
+.foot{
+  margin-top:72px; padding-top:22px; border-top:1px solid var(--line);
+  font-size:13.5px; color:var(--muted); max-width:70ch;
+}
+.foot code{font-size:.9em;}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation:none !important;transition:none !important;scroll-behavior:auto !important;}
+}
+html{scroll-behavior:smooth;}
+
+/* ── 인쇄 ── */
+@media print{
+  :root{
+    --ground:#FFFFFF; --surface:#FFFFFF; --surface-sunk:#F4F5F7;
+    --ink:#000000; --ink-soft:#1F252C; --muted:#4A5560;
+    --line:#B9C1CA; --line-soft:#D6DCE3;
+  }
+  body{font-size:10.5pt;line-height:1.55;}
+  .wrap{max-width:none;padding:0;}
+  .shell{grid-template-columns:minmax(0,1fr);gap:0;}
+  .rail{display:none;}
+  .masthead{padding-top:0;}
+  section + section{margin-top:28px;}
+  .sec-head{break-after:avoid;}
+  h3,h4{break-after:avoid;}
+  .step,.note,.cause,.machine,.tw{break-inside:avoid;}
+  pre{white-space:pre-wrap;word-break:break-word;}
+  .machine,.cause{box-shadow:none;}
+  a{color:inherit;text-decoration:none;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="masthead">
+    <p class="eyebrow">Automapping_3 · 갱신 2026-08-29</p>
+    <h1>순찰로봇 배포 안내</h1>
+    <p class="lede">
+      네 묶음의 수정과, 이를 세 기기에 어떤 순서로 반영하는지 정리한 문서입니다.
+      <strong>넷 다 아직 로봇·젯슨에 반영되지 않았습니다</strong> — 저장소에
+      커밋됐다는 것과 기기에 올렸다는 것은 다릅니다.
+    </p>
+    <dl class="facts">
+      <div class="fact"><dt>① 08-28</dt><dd>커밋됨</dd></div>
+      <div class="fact"><dt>② 08-29</dt><dd>커밋됨</dd></div>
+      <div class="fact"><dt>③ TTS·영상·최적화</dt><dd>커밋됨</dd></div>
+      <div class="fact"><dt>④ 재검토 결함 4건</dt><dd>커밋 전</dd></div>
+      <div class="fact"><dt>자체 테스트</dt><dd>15 / 15</dd></div>
+    </dl>
+    <div class="note n-warn" style="margin-top:18px">
+      <span class="note-label">④는 ③을 커밋한 뒤 저장소를 다시 읽으면서 찾았습니다</span>
+      <p>
+        <strong>넷 다 아직 겪은 적은 없습니다</strong> — TTS와 스테레오 캘리브레이션이
+        젯슨에 배포되기 전이라, 그 코드가 실제로 돈 적이 없기 때문입니다. 다만 넷 다
+        실패해도 <strong>예외가 나지 않는 종류</strong>라, 배포한 뒤에 걸리면 원인을
+        찾기가 어렵습니다. 특히 음성 모델 경로는 배포 안내대로 따라 하면
+        <strong>반드시</strong> 걸리므로 <code>set_env.sh</code>를 꼭 손보세요(6장 1·1단계).
+      </p>
+    </div>
+  </header>
+
+  <div class="shell">
+
+    <nav class="rail" aria-label="목차">
+      <h2>목차</h2>
+      <ol>
+        <li><a href="#s1"><span>01</span>08-28 작업분</a></li>
+        <li><a href="#s2"><span>02</span>순찰 · 지도 · 장애물</a></li>
+        <li><a href="#s3"><span>03</span>TTS · 영상 · 최적화</a></li>
+        <li><a href="#s4"><span>04</span>재검토 결함</a></li>
+        <li><a href="#s5"><span>05</span>파일과 기기</a></li>
+        <li><a href="#s6"><span>06</span>수행 절차</a></li>
+        <li><a href="#s7"><span>07</span>확인 방법</a></li>
+        <li><a href="#s8"><span>08</span>되돌리는 법</a></li>
+        <li><a href="#s9"><span>09</span>남은 작업</a></li>
+      </ol>
+    </nav>
+
+    <main>
+
+      <!-- ══════════════ 1 ══════════════ -->
+      <section id="s1">
+        <div class="sec-head">
+          <span class="sec-num">01</span>
+          <h2 class="sec-title">08-28 작업분</h2>
+          <span class="day d1">커밋됨 · 미배포</span>
+        </div>
+
+        <div class="cause">
+          <h3>젯슨이 잡은 <code>person</code>이 미니맵에 작업자로 안 찍히던 문제</h3>
+          <p>
+            원인이 <strong>두 군데</strong>였습니다. 라벨 변환은 멀쩡했고 문제는 그 앞
+            단계였습니다.
+          </p>
+          <h4>① 젯슨에서 <code>person</code>이 아예 나가지 못했습니다</h4>
+          <p>
+            겹친 탐지를 <code>text_prompt</code> <strong>순서</strong>로만 정리해서,
+            <code>"person with no helmet"</code>(0번)과 <code>"person"</code>(1번)이 같은
+            사람에 걸리면 <strong>점수와 무관하게 항상</strong> 일반 <code>person</code>이
+            지워졌습니다. <code>threshold=0.1</code>은 낮고 두 프롬프트는
+            <code>person</code> 토큰을 공유하므로, 안전모를 쓴 작업자에게도 위반 쿼리가
+            함께 걸리는 것이 보통입니다.
+          </p>
+          <p class="arrow">
+            이제 <strong>점수</strong>로 정하되 위반 클래스에
+            <code>HELMET_SAFETY_MARGIN</code>(0.05) 가산점을 줍니다.
+          </p>
+          <h4>② 사람은 SLAM 지도에 없습니다</h4>
+          <p>
+            저장된 occupancy grid에만 레이캐스팅해서, 열린 통로의 작업자는
+            <code>None</code>이 되어 통째로 버려지고 벽 앞의 작업자는 레이가 사람을
+            통과해 뒤쪽 벽에 찍혔습니다.
+          </p>
+          <p class="arrow">
+            <code>raycast_to_live_obstacle()</code>이 <code>/scan</code> 기반 실시간
+            장애물(= 그 작업자)을 먼저 봅니다.
+          </p>
+        </div>
+
+        <div class="cause">
+          <h3>LiDAR 장애물 빨간 점 제거</h3>
+          <p>
+            occupancy grid에는 물체 종류 정보가 없어 벽과 적재물을 모양으로만 추정해야
+            했고, 빗나가면 벽 위에 점이 줄줄이 찍혔습니다. 레이어를 통째로
+            제거했습니다.
+          </p>
+          <div class="note n-info">
+            <span class="note-label">남긴 것</span>
+            <p>
+              <code>/scan</code> 기반 실시간 장애물 계산은 그대로 뒀습니다 — 위 ②의
+              작업자 마커에 필요합니다.
+            </p>
+          </div>
+        </div>
+
+        <div class="cause">
+          <h3>자율 매핑이 갔던 곳을 왕복하던 문제</h3>
+          <p>
+            <code>auto_mapper.py</code>는 지나온 곳을 전혀 기억하지 않는 순수
+            랜덤워크였습니다.
+          </p>
+          <p class="arrow">
+            <strong>미탐사 방향 선호</strong>(벽 뒤는 세지 않음) + <strong>방문
+            기억</strong>(0.5m 격자 진입 횟수) + <strong>회전 고정·재조정</strong>.
+            안전 로직은 그대로입니다.
+          </p>
+        </div>
+
+        <div class="cause">
+          <h3>스테레오 캘리브레이션 도입</h3>
+          <p>
+            거리는 <code>Z = f × B / d</code>인데 <code>f=500.0</code> /
+            <code>B=0.06</code>이 <strong>추측값</strong>이었고, 같은 <code>f</code>가
+            미니맵 방향각에도 쓰입니다. 게다가 <code>cv2.StereoSGBM</code>이 전제하는
+            <strong>정렬(rectification) 단계가 아예 없었습니다.</strong>
+          </p>
+          <p class="arrow">
+            <code>stereo_calibrate.py</code>로 촬영 → 계산 → 검증하고, sender가 결과
+            파일이 있으면 자동으로 읽어 <strong>캡처 스레드에서</strong> 정렬합니다.
+          </p>
+        </div>
+      </section>
+
+      <!-- ══════════════ 2 ══════════════ -->
+      <section id="s2">
+        <div class="sec-head">
+          <span class="sec-num">02</span>
+          <h2 class="sec-title">08-29 ① 순찰 · 지도 · 장애물</h2>
+          <span class="day d2">커밋 전</span>
+        </div>
+
+        <div class="cause">
+          <h3>지도 기반 순찰 경로 자동 생성 + 대시보드에서 시작</h3>
+          <p>
+            <code>patrol_node.py</code>의 기본 웨이포인트는 시뮬레이션 좌표라 실물
+            지도에서는 지도 밖이거나 벽 속입니다. 그러면 Nav2가 모든 목표를 ABORTED로
+            돌려주는데, patrol_node는 재시도 후 다음 지점으로 넘어가므로 <strong>로그만
+            보면 순찰이 도는 것처럼 보입니다.</strong>
+          </p>
+          <p>새 <code>patrol_planner.py</code>가 지금 지도에서 직접 경로를 만듭니다.</p>
+          <ol class="prose">
+            <li><strong>여유 공간</strong> — 벽까지 거리를 재서 기준 미만 제외. 미탐사도 장애물로 침</li>
+            <li><strong>도달 가능성</strong> — 로봇이 있는 연결 성분만. 문 닫힌 옆방 제외</li>
+            <li><strong>구역</strong> — 미니맵이 이미 나눈 것을 그대로 사용</li>
+            <li><strong>지점 선정</strong> — 벽에서 멀되 구석이 아닌 자리</li>
+            <li><strong>순서</strong> — 측지거리 + 최근접이웃 + 2-opt</li>
+          </ol>
+          <p>
+            직선거리로 순서를 정하면 <strong>벽을 뚫고 가는 순서</strong>가 나옵니다.
+            빗 모양 통로에서 옆 통로는 직선 4.0m지만 실제로는 11.4m를 돌아가야 합니다
+            (자체 테스트 기준 실제 이동거리 측지 37.2m / 직선 40.0m).
+          </p>
+          <div class="note n-trap">
+            <span class="note-label">자동 시작을 안 한 이유</span>
+            <p>
+              <strong>페이지가 열릴 때 자동으로 시작하지 않습니다.</strong> Streamlit은
+              버튼 하나만 눌러도 스크립트를 처음부터 다시 실행하므로, 자동 시작을 걸면
+              관제자가 화면을 만질 때마다 로봇에게 "처음부터 다시 돌아라"를 보내게
+              됩니다. 확인 단계가 있는 버튼으로 했습니다.
+            </p>
+          </div>
+        </div>
+
+        <div class="cause">
+          <h3>지도 파일의 <code>free_thresh</code> 결함 — 미탐사가 자유공간으로 읽히고 있었습니다</h3>
+          <p>
+            순찰 플래너가 <code>factory_map</code>에서 "벽까지 4.61m"를 내놓기에 원본을
+            열어봤더니, <code>free_thresh: 0.25</code>가 미탐사 픽셀(205)을 자유공간으로
+            읽고 있었습니다. 점유도가 정확히 0.196이라 0.25 아래로 통과합니다.
+          </p>
+          <div class="tw">
+            <table>
+              <thead><tr><th></th><th>수정 전</th><th>수정 후</th></tr></thead>
+              <tbody>
+                <tr><td><code>factory_map</code> 자유공간</td><td class="num">26.3 m²</td><td class="num" style="color:var(--ok);font-weight:600">4.3 m²</td></tr>
+                <tr><td><code>smart_factory_map</code></td><td class="num">420.6 m²</td><td class="num">369.6 m²</td></tr>
+                <tr><td><code>digital_twin_map</code></td><td class="num">109.0 m²</td><td class="num">83.0 m²</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note n-trap">
+            <span class="note-label">영향 범위</span>
+            <p>
+              <strong>Nav2와 AMCL도 같은 값을 읽습니다</strong> — 지금까지 미탐사 영역을
+              주행 가능한 곳으로 보고 있었습니다. yaml 3개와
+              <code>generate_map.py</code>를 ROS 표준값 <code>0.196</code>으로 고쳤습니다.
+            </p>
+          </div>
+        </div>
+
+        <div class="cause">
+          <h3>의자 다리처럼 "치우면 없어질 물건"이 지도에 박히는 문제</h3>
+          <p>
+            2D LiDAR는 바닥에서 약 0.18m 한 높이만 봅니다. 하필 그 높이에 의자·책상
+            다리가 걸리고, 매핑 중 서 있던 가구는 지도에 박혀 <strong>치워도
+            남습니다.</strong> 그 지도를 Nav2(static layer) · AMCL ·
+            <code>patrol_planner</code>가 함께 믿습니다.
+          </p>
+          <p>
+            <strong>SLAM 중에 저절로 안 지워집니다.</strong> Cartographer의 서브맵은
+            <code>num_range_data</code>(기본 90스캔)를 채우면 동결되므로, 나중에 그
+            자리를 다시 지나가며 빈 공간을 관측해도 옛 서브맵은 바뀌지 않습니다.
+          </p>
+          <p>
+            새 <code>maps/clean_map.py</code>가 저장된 지도를 후처리합니다.
+            <strong>세 조건을 모두</strong> 만족할 때만 지웁니다 — 작다(12셀 이하) ·
+            짧다(0.20m 이하) · <strong>둘레가 전부 자유공간</strong>.
+          </p>
+          <div class="tw">
+            <table>
+              <thead><tr><th>상황</th><th>결과</th></tr></thead>
+              <tbody>
+                <tr><td>통로 한가운데 의자</td><td>로봇이 주위를 돌았으므로 둘레가 전부 자유공간 → <strong>지움</strong></td></tr>
+                <tr><td>벽에 붙은 의자</td><td>둘레에 벽이 섞임 → 남김</td></tr>
+                <tr><td>기둥·파렛트(0.3m+)</td><td>크기 초과 → 남김</td></tr>
+                <tr><td>안쪽 칸막이벽</td><td>얇아도 길다 → 남김</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note n-pass">
+            <span class="note-label">안전 장치</span>
+            <p>
+              <strong>원본은 절대 덮어쓰지 않습니다.</strong> <code>_clean.pgm/.yaml</code>
+              과 함께 지운 자리를 빨갛게 칠한 검토용 png를 냅니다.
+            </p>
+          </div>
+        </div>
+
+        <div class="cause">
+          <h3>LiDAR보다 낮은 장애물에 걸려도 계속 미는 문제</h3>
+          <p>
+            문턱·케이블 트레이·파렛트 하단은 <strong>센서로 영영 안 보입니다.</strong>
+            로봇은 앞이 비었다고 믿고 계속 밀어붙이고, 살짝 걸린 정도로는 범퍼도 안
+            눌립니다.
+          </p>
+          <p>
+            새 <code>stall_monitor.py</code>가 <strong>행동으로</strong> 알아냅니다 —
+            "전진 명령이 있는데 지도상 위치가 3초째 그대로다".
+          </p>
+          <h4><code>/odom</code>이 아니라 TF를 봅니다</h4>
+          <p>
+            바퀴가 헛돌면 오도메트리는 거짓말을 합니다.
+            <code>map → base_footprint</code> TF는 Cartographer 스캔 매칭(이 프로젝트는
+            <code>use_odometry = false</code>)에서 나오므로 실제로 안 움직였으면
+            그대로입니다. <code>/odom</code>은 움직였다는데 TF는 그대로면 <strong>바퀴
+            헛돎</strong>으로 로그에 구분해 남깁니다.
+          </p>
+          <div class="note n-warn">
+            <span class="note-label">이 노드가 하지 않는 것</span>
+            <p>
+              <strong><code>/cmd_vel</code>을 쓰지 않습니다.</strong> 순찰 중엔 Nav2가,
+              매핑 중엔 auto_mapper가 주인이라 여기서 또 쓰면 두 명령이 서로를
+              밀어냅니다. 알리기만 하고 피하는 건 각자 합니다.
+            </p>
+          </div>
+          <div class="tw">
+            <table>
+              <thead><tr><th>누가</th><th>어떻게</th></tr></thead>
+              <tbody>
+                <tr><td class="file">auto_mapper</td><td>그 방향 점수를 120점 깎아 다시 안 감</td></tr>
+                <tr><td class="file">patrol_planner</td><td>그 자리를 후보에서 파냄</td></tr>
+                <tr><td>Nav2</td><td><code>/keepout_filter_mask</code> (nav2_params에 필터 추가 시)</td></tr>
+                <tr><td>미니맵</td><td>주황 <strong>X</strong>로 표시 — 사람이 치우러 가야 하니까</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            발견한 자리는 <code>~/blind_obstacles.json</code>에 남습니다. 문턱은 치우지
+            않는 한 계속 거기 있으므로, 재시작마다 잊으면 매번 다시 들이받습니다.
+          </p>
+        </div>
+      </section>
+
+      <!-- ══════════════ 3 · TTS ══════════════ -->
+      <section id="s3">
+        <div class="sec-head">
+          <span class="sec-num">03</span>
+          <h2 class="sec-title">08-29 ② TTS · 영상 속도 · 최적화</h2>
+          <span class="day d3">커밋 전</span>
+        </div>
+
+        <div class="cause">
+          <h3>참조하던 음성 모델이 존재하지 않았습니다</h3>
+          <p>
+            <code>Rx_pipeline.py</code>의 기본값
+            <code>ko_KR-hyeri-medium.onnx</code>는 <strong>Piper 공식 저장소
+            (<code>rhasspy/piper-voices</code>)에 없습니다.</strong> 그 이름으로
+            받으려 하면 404가 나거나, 파일명이 안 맞아 <strong>조용히 무음</strong>이
+            됩니다.
+          </p>
+          <p>확인 결과 Piper의 한국어 음성은 하나뿐입니다.</p>
+          <div class="tw">
+            <table>
+              <thead><tr><th>항목</th><th>값</th></tr></thead>
+              <tbody>
+                <tr><td>이름</td><td class="file"><strong>ko_KR-kss-medium</strong></td></tr>
+                <tr><td>크기</td><td class="num">.onnx 63MB + .onnx.json 5KB</td></tr>
+                <tr><td>음질</td><td class="num">22,050Hz 단일 화자(여성), medium</td></tr>
+                <tr><td>데이터셋</td><td>Korean Single Speaker Speech (KSS)</td></tr>
+                <tr><td>라이선스</td><td style="color:var(--danger);font-weight:600">CC BY-NC-SA 4.0 — 비상업적 사용만</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note n-trap">
+            <span class="note-label">라이선스를 확인하세요</span>
+            <p>
+              경진대회·연구·시연은 출처를 밝히면 되지만, <strong>상용화 시에는 쓸 수
+              없습니다.</strong> 사업화 계획이 있으면 다른 음성을 구하거나 직접
+              학습해야 합니다.
+            </p>
+          </div>
+          <p class="arrow">
+            <strong><code>.onnx</code>와 <code>.onnx.json</code>은 항상 짝입니다.</strong>
+            piper가 모델 옆의 json을 함께 읽는데 기존 코드는 <code>.onnx</code>만
+            확인했습니다. 모델은 63MB라 저장소에 넣지 않습니다
+            (<code>.gitignore</code>에 규칙 추가).
+          </p>
+        </div>
+
+        <div class="cause">
+          <h3>USB 스피커 — 젯슨에서 걸리는 세 가지</h3>
+          <div class="tw">
+            <table>
+              <thead><tr><th>함정</th><th>증상</th><th>대응</th></tr></thead>
+              <tbody>
+                <tr>
+                  <td><strong>기본 출력이 HDMI</strong></td>
+                  <td>스피커를 꽂아도 무음인데 <code>aplay</code>는 <strong>성공(코드 0)</strong>으로 끝남</td>
+                  <td><code>APLAY_DEVICE</code>가 비면 <code>aplay -l</code>을 읽어 <strong>USB 카드 자동 선택</strong></td>
+                </tr>
+                <tr>
+                  <td><strong>카드 번호가 안 고정됨</strong></td>
+                  <td>재부팅·재연결로 <code>plughw:1,0</code>이 다른 장치를 가리킴</td>
+                  <td>번호가 아니라 <strong>이름</strong>(<code>plughw:CARD=Device,DEV=0</code>)으로 지정</td>
+                </tr>
+                <tr>
+                  <td><strong>샘플레이트 불일치</strong></td>
+                  <td>piper는 22050Hz, 값싼 USB는 48000Hz만 받음 → <code>hw:</code>로 열면 실패</td>
+                  <td><strong><code>plughw:</code></strong>로 ALSA가 리샘플링하게 함</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            첫 번째가 가장 찾기 어렵습니다 — 로그에는 아무 문제가 없는데 소리만 안
+            납니다. 재생이 실패하면 장치 캐시를 비우고 다음 문장에서 다시 찾으므로,
+            USB를 뽑았다 꽂아 카드 번호가 바뀌어도 복구됩니다.
+          </p>
+        </div>
+
+        <div class="cause">
+          <h3><code>setup_tts.sh</code> — 최초 1회 준비</h3>
+          <p>
+            TTS는 "안 들린다"는 증상 하나에 원인이 다섯 개쯤 됩니다. 모델이 없거나,
+            <code>.onnx.json</code>이 없거나, piper가 안 깔렸거나, aplay가 HDMI로
+            내보내거나, 볼륨이 0이거나. 새 스크립트가 순서대로 하나씩 짚고
+            <strong>실제로 소리까지 내 봅니다.</strong>
+          </p>
+          <p class="arrow">
+            장치 선택 규칙은 <code>Rx_pipeline.py</code>에서 불러 씁니다 — 두 곳에 같은
+            규칙을 쓰면 조용히 갈라집니다.
+          </p>
+          <h4>함께 정리한 것</h4>
+          <ul>
+            <li>
+              <strong>TTS 테스트가 self_test 묶음에서 빠져 있었습니다.</strong> 실제
+              소켓 왕복으로 검증하는 좋은 테스트인데 아무도 안 돌렸습니다. 원본을
+              불러 돌리는 얇은 다리를 추가했습니다(사본 아님).
+            </li>
+            <li><code>.gitignore</code>에 <code>*.onnx</code> 규칙이 없어 63MB가 실수로 커밋될 수 있었습니다.</li>
+            <li>젯슨 배포 폴더(<code>smart_factory_project/tts/</code>)에 TTS 파일이 하나뿐이었습니다.</li>
+          </ul>
+        </div>
+
+        <div class="cause">
+          <h3>웹 영상이 느린 원인 — 네 겹</h3>
+          <p>
+            <code>:8500</code> MJPEG 스트림이 목표 30fps에 못 미치는 원인을 코드에서
+            찾았습니다. <strong>한 가지가 아니라 네 겹입니다.</strong>
+          </p>
+
+          <h4>① <code>sleep</code>이 인코딩 <em>후에</em> 고정 33ms였습니다</h4>
+          <pre><code>jpeg_bytes = ...encode...   <span class="cmt"># 20ms 걸렸다 치면</span>
+time.sleep(0.033)           <span class="cmt"># 여기서 또 33ms</span></code></pre>
+          <p>
+            실제 주기 = 인코딩 + 33ms = <strong>53ms ≈ 19fps</strong>. 주석에는
+            "약 30 FPS"라 적혀 있는데 실제로는 못 나옵니다.
+          </p>
+          <p class="arrow">경과 시간을 빼고 남은 만큼만 자도록 고쳤습니다.</p>
+
+          <h4>② 클라이언트마다 따로 인코딩했습니다</h4>
+          <p>
+            <code>draw_overlays</code>(2.7MB 복사) + <code>imencode</code>를 연결마다
+            독립 실행했습니다. <strong>대시보드 iframe + 브라우저 탭 = 정확히
+            2배.</strong> 보는 사람이 늘수록 모두에게 느려집니다.
+          </p>
+          <p class="arrow">
+            같은 (프레임, 박스) 조합이면 한 번만 만들어 나눠 쓰는 캐시를 넣었습니다.
+          </p>
+
+          <h4>③ 카메라 FPS를 요청조차 하지 않았습니다</h4>
+          <p>
+            <code>cap.set(CAP_PROP_FPS, ...)</code>가 없었습니다. 2560×720에서 USB
+            스테레오 모듈은 흔히 15fps 이하로 협상하고, <strong>그러면 아래를 아무리
+            고쳐도 그 위로 못 올라갑니다.</strong>
+          </p>
+          <p class="arrow">
+            요청하고, 거부당하면 시작 로그에 경고합니다. 드라이버 버퍼도 1로
+            줄였습니다(깊으면 낡은 프레임이 나와 "밀리는" 느낌이 납니다).
+          </p>
+
+          <div class="note n-trap">
+            <span class="note-label">④ 08-28 작업이 원인일 수 있습니다</span>
+            <p>
+              08-28에 넣은 rectification이 캡처 스레드에 있습니다.
+              <code>cv2.remap</code> × 2를 매 프레임 돌리는데, 1280×720 두 장이면
+              젯슨 CPU에서 <strong>프레임당 10~30ms</strong>가 나올 수 있고 30fps
+              예산(33ms)의 절반 이상입니다. 즉 <strong>"여전히" 느린 게 아니라
+              08-28 작업이 더 느리게 만들었을 수 있습니다.</strong> 이건 측정해야
+              알 수 있어 아래 계측을 넣었습니다.
+            </p>
+          </div>
+        </div>
+
+        <div class="cause">
+          <h3><code>/health</code>로 어디가 병목인지 가릅니다</h3>
+          <p>추측으로 만지면 엉뚱한 곳을 고치게 되므로 구간별로 잽니다.</p>
+          <pre><code>curl http://&lt;젯슨IP&gt;:8500/health</code></pre>
+          <pre class="term"><code>{"capture_fps": 14.8, "stream_fps": 14.5, "rectify_ms": 22.4,
+ "encode_ms": 18.1, "jpeg_kb": 287.3, "encode_reuse": 412,
+ "encode_miss": 208, "stream_clients": 2, "jpeg_quality": 95}</code></pre>
+          <p><strong>읽는 순서가 중요합니다.</strong></p>
+          <div class="tw">
+            <table>
+              <thead><tr><th>값</th><th>판단</th><th>조치</th></tr></thead>
+              <tbody>
+                <tr><td class="file">capture_fps</td><td>여기가 낮으면 <strong>나머지는 무의미</strong></td><td>해상도 축소 또는 <code>CAMERA_FPS</code></td></tr>
+                <tr><td class="file">rectify_ms</td><td>15ms 넘으면 큼</td><td>캘리브레이션 끄기 또는 해상도 축소</td></tr>
+                <tr><td class="file">encode_ms</td><td>15ms 넘으면 큼</td><td><code>JPEG_QUALITY=80</code></td></tr>
+                <tr><td class="file">jpeg_kb</td><td>200KB 넘으면 무선이 버거움</td><td>같음</td></tr>
+                <tr><td class="file">encode_reuse</td><td><code>encode_miss</code>보다 <strong>커야 정상</strong> (클라 2명 이상)</td><td>작으면 캐시가 안 먹는 것</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <pre><code>export JPEG_QUALITY=80    <span class="cmt"># 용량 절반, 인코딩도 빨라짐</span>
+export STREAM_FPS=30      <span class="cmt"># 스트리밍 목표</span>
+export CAMERA_FPS=30      <span class="cmt"># 카메라에 요청할 값</span></code></pre>
+        </div>
+
+        <div class="cause">
+          <h3>추론 루프 최적화 — 시차 계산을 필요할 때만</h3>
+          <p>
+            <code>stereo.compute()</code>(StereoSGBM)가 <strong>탐지 유무와 무관하게
+            매 프레임</strong> 돌고 있었습니다. 결과는 오직 "박스 안의 거리" 하나에만
+            쓰이는데도요.
+          </p>
+          <div class="tw">
+            <table>
+              <thead><tr><th></th><th>개발 PC (1280×720)</th><th>젯슨 추정</th></tr></thead>
+              <tbody>
+                <tr><td>StereoSGBM</td><td class="num" style="color:var(--danger);font-weight:600">148 ms</td><td class="num">400~700 ms</td></tr>
+                <tr><td>거리 계산 (전체 프레임)</td><td class="num">7.35 ms</td><td class="num">—</td></tr>
+                <tr><td>거리 계산 (박스 안만)</td><td class="num" style="color:var(--ok);font-weight:600">1.19 ms (6.2배)</td><td class="num">—</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p>
+            <strong>탐지 없는 프레임에서 155ms를 통째로 절감합니다.</strong> 탐지가
+            80% 프레임에서 없다면 평균 <strong>126ms/프레임</strong>입니다.
+          </p>
+          <div class="note n-info">
+            <span class="note-label">영상 속도에도 도움이 됩니다</span>
+            <p>
+              젯슨은 코어가 적어서 <strong>한 스레드가 CPU를 다 먹으면 캡처와 JPEG
+              인코딩까지 밀립니다.</strong> 즉 이 최적화는 위 영상 문제와도 이어집니다.
+            </p>
+          </div>
+          <p class="arrow">
+            거리 계산도 전체 프레임 <code>depth_map</code>(3.7MB 할당 + 전체 순회 3회)
+            대신 박스 안에서만 하도록 바꿨습니다. <strong>300건 랜덤 검증에서 옛
+            방식과 차이 0</strong> — 값은 그대로입니다. <code>/health</code>의
+            <code>stereo_ran</code> / <code>stereo_skipped</code> 비율로 실제 효과를
+            볼 수 있습니다.
+          </p>
+        </div>
+
+        <div class="cause">
+          <h3>미니맵 최적화 — 지도 배열을 매번 다시 만들던 문제</h3>
+          <p>
+            <code>raycast_to_obstacle()</code>이 <strong>탐지 UDP 패킷마다</strong>
+            18만 개짜리 리스트를 numpy 배열로 변환했습니다. 정작 읽는 것은 레이 위
+            셀 몇 개인데요.
+          </p>
+          <div class="tw">
+            <table>
+              <thead><tr><th>패킷/초</th><th>절감</th></tr></thead>
+              <tbody>
+                <tr><td class="num">10</td><td class="num">36 ms/s (CPU 3.6%)</td></tr>
+                <tr><td class="num">20</td><td class="num">72 ms/s (CPU 7.2%)</td></tr>
+                <tr><td class="num">30</td><td class="num" style="color:var(--ok);font-weight:600">108 ms/s (CPU 10.8%)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="arrow">
+            <code>/scan</code> 콜백(10Hz)도 같은 변환을 하고 있어 36ms/s 추가 절감.
+            지도가 바뀔 때만 만들어 캐시합니다(<code>grid_to_array</code>).
+          </p>
+          <div class="note">
+            <span class="note-label">손대지 않은 것</span>
+            <p>
+              미니맵 MJPEG 밑그림 캐싱(5.8배)도 계산해 봤지만 <strong>초당 39ms(CPU
+              3.9%)</strong>에 그치고, 대시보드는 이미 iframe 경로를 씁니다. 캐시
+              무효화 실수로 낡은 지도를 보여줄 위험이 이득보다 커서 두었습니다.
+            </p>
+          </div>
+        </div>
+
+        <div class="cause">
+          <h3>전체 검토에서 찾은 것 — 셸 스크립트 CRLF</h3>
+          <p>셸 스크립트 4개가 CRLF였습니다. 리눅스에서는 이렇게 죽습니다.</p>
+          <pre class="term"><code>bash: ./run_pipeline.sh: /bin/bash^M: bad interpreter: No such file or directory</code></pre>
+          <p>
+            <strong>왜 지금까지 안 드러났나:</strong> 저장소(blob)에는 LF로 들어 있고
+            git 설정이 <code>core.autocrlf=true</code>라 <strong>Windows 워킹트리에서만</strong>
+            CRLF가 됩니다. <code>git clone</code>으로 리눅스에 받으면 LF라 문제가 없습니다.
+          </p>
+          <div class="note n-trap">
+            <span class="note-label">그런데 이 문서는 scp 로 복사하라고 합니다</span>
+            <p>
+              그러면 Windows 워킹트리의 CRLF가 그대로 젯슨으로 넘어갑니다. 9단계에서
+              <code>scp -r</code>로 옮기라고 안내한 <code>setup_tts.sh</code>도 한 번
+              커밋되면 같은 상태가 됩니다.
+            </p>
+          </div>
+          <p class="arrow">
+            루트에 <code>.gitattributes</code>를 만들어 <code>*.sh</code>/<code>*.py</code>/
+            <code>*.lua</code>를 LF로 고정하고, CRLF 4개를 정규화했습니다.
+            지도(<code>.pgm</code>)·모델(<code>.onnx</code>)은 binary로 명시했습니다.
+          </p>
+        </div>
+
+        <div class="cause">
+          <h3>검토 중 발견해 고친 결함</h3>
+          <p>
+            <code>/health</code>가 <code>perf_state["stereo_ms"]</code>를 읽는데
+            <strong>키를 정의하지 않았습니다.</strong> <code>KeyError</code>로 HTTP
+            핸들러 스레드가 죽어 <code>/health</code>가 통째로 응답 불가가 됩니다.
+          </p>
+          <p class="arrow">
+            자체 테스트가 잡았고, <strong>같은 사고가 재발하지 않도록 키 정의/사용
+            대조 검사</strong>를 테스트에 넣었습니다(<code>perf_state</code> 12/12,
+            <code>health_state</code> 8/8 일치).
+          </p>
+          <div class="note n-pass">
+            <span class="note-label">전체 검증 결과</span>
+            <p>
+              Python 69개 문법 OK · 셸 11개 OK · HTML 3개 OK · pyflakes 지적 없음 ·
+              포트 기본값 8종 일치 · 사본 11종 동기화 · <strong>자체 테스트 15개 통과</strong>.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════ 4 · 재검토 ══════════════ -->
+      <section id="s4">
+        <div class="sec-head">
+          <span class="sec-num">04</span>
+          <h2 class="sec-title">재검토에서 찾은 결함</h2>
+          <span class="day d4">④ 커밋 전</span>
+        </div>
+        <p class="lede" style="margin-bottom:24px">
+          ③을 커밋한 뒤 저장소 전체를 다시 읽으면서 찾은 넷입니다. 공통점이 있습니다 —
+          <strong>넷 다 실패해도 예외를 던지지 않습니다.</strong> 코드를 읽어야만 드러나는
+          종류입니다. 다만 <strong>넷 다 아직 겪은 적은 없습니다</strong>. TTS와
+          캘리브레이션이 젯슨에 배포되기 전이라 그 코드가 실제로 돈 적이 없기 때문입니다.
+          걸리는 시점이 각각 다르므로 아래에 함께 적었습니다.
+        </p>
+
+        <div class="cause">
+          <h3>TTS 송신 모듈을 저장소 레이아웃에서만 찾던 문제</h3>
+          <p><code>patrol_pipeline_rag.py</code>가 TTS 송신 모듈을 찾는 기본 경로가 이랬습니다.</p>
+          <pre><code>_DEFAULT_TTS_DIR = os.path.join(os.path.dirname(_PROJECT_ROOT), "TTS Engine and pipeline")</code></pre>
+          <p>
+            저장소 레이아웃에서는 맞습니다. 그런데 <strong>젯슨 배포본은
+            <code>~/smart_factory_project/{pipeline, tts}</code></strong>입니다. 위 계산은
+            한 단계 위로 올라가 <code>~/TTS Engine and pipeline</code>을 찾는데 젯슨에는
+            그런 폴더가 없고, <strong>바로 옆의 <code>tts/</code>는 후보에 들어 있지도
+            않았습니다.</strong>
+          </p>
+          <div class="note n-trap">
+            <span class="note-label">그런데 실패해도 아무 일도 일어나지 않습니다</span>
+            <p>
+              <code>load_tts_sender()</code>는 예외를 올리지 않고 경고 한 줄을 찍은 뒤
+              <code>send_alert=None</code>으로 계속 돕니다. 걸리면 파이프라인은 정상으로
+              보이고 스피커만 울지 않습니다.
+            </p>
+          </div>
+          <div class="note n-info">
+            <span class="note-label">다만 아직 겪은 적이 없는 잠재 결함입니다</span>
+            <p>
+              처음 보고할 때 "지금 조용히 꺼진 채로 돌고 있다"는 취지로 적었는데 사실이
+              아니라 바로잡습니다. 이유는 둘입니다.
+            </p>
+            <p>
+              ① <code>patrol_pipeline_rag.py</code>는 <strong>상민님 PC에서 돕니다</strong>
+              (루트 README 데이터 흐름도, <code>run_pipeline_rag.sh</code>도 그 폴더에만
+              있음). 거기서는 저장소 레이아웃이 맞으므로 옛 계산이 정상 동작했습니다.
+            </p>
+            <p>
+              ② 젯슨에서는 이 파일이 <code>integration/</code>을 import 하다
+              <strong>먼저</strong> 죽습니다(9장). TTS 경로 조회에 도달하지도 못합니다.
+            </p>
+            <p>
+              그래도 고칠 값어치는 있습니다. 젯슨 번들을 완성하는 순간 걸릴 자리이고,
+              파이프라인과 대시보드가 같은 규칙을 쓰게 되기 때문입니다.
+            </p>
+          </div>
+          <p class="arrow">
+            후보를 둘로 두고 <code>Rag_to_Jetson.py</code>가 <strong>실제로 있는</strong>
+            쪽을 고르게 했습니다. <code>TTS_MODULE_DIR</code>로 덮어쓰는 동작은
+            그대로입니다. 대시보드(<code>smart_factory_dashboard_v3.py</code>)도 같은
+            계산을 하고 있었으므로 <strong>함께 고쳤습니다</strong> — 두 곳이 다른 데를
+            보면 한쪽만 되고, 둘 다 조용히 실패합니다.
+          </p>
+        </div>
+
+        <div class="cause">
+          <h3>안내 문서 세 곳이 존재하지 않는 음성 모델을 가리키던 문제</h3>
+          <p>
+            3-1에서 기본 음성을 <code>ko_KR-kss-medium</code>으로 바꿨는데, 안내가
+            따라오지 않은 곳이 셋 있었습니다.
+          </p>
+          <div class="tw">
+            <table>
+              <thead><tr><th>파일</th><th>줄</th></tr></thead>
+              <tbody>
+                <tr><td class="file">README.md</td><td>209 (실행 예), 323 (환경변수 표)</td></tr>
+                <tr><td class="file">smart_factory_project/set_env.example.sh</td><td>65</td></tr>
+                <tr><td class="file">TTS Engine and pipeline/README.md</td><td>15, 135, 138</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note n-trap">
+            <span class="note-label">set_env.example.sh 가 특히 위험합니다</span>
+            <p>
+              이 파일을 복사해 <code>source set_env.sh</code>하면
+              <code>PIPER_MODEL_PATH</code>가 <strong>세션 전체에서</strong> 없는 파일을
+              가리키고, <code>setup_tts.sh</code>로 모델을 제대로 받아 놓았어도
+              무시됩니다. 수신기는 시작할 때 경고 한 번, 이후로는 경보마다
+              <code>Piper 합성 실패</code>만 쌓입니다 — 밖에서 보이는 증상은
+              <strong>무음 하나뿐</strong>입니다.
+            </p>
+          </div>
+          <p>
+            <strong>코드가 아니라 문서에서 갈라진 것이라 자체 테스트 15개가 하나도
+            잡지 못했습니다.</strong>
+          </p>
+          <p class="arrow">
+            세 파일을 정정하고, <code>setup_tts.sh</code>가 받는 음성 이름과 안내 문서의
+            <code>PIPER_MODEL_PATH</code>가 어긋나면 <strong>실패하는 검사</strong>를
+            <code>test_tts_pipeline.py</code>에 넣었습니다. 같은 종류의 드리프트가 다시
+            생기면 테스트가 먼저 잡습니다. 아울러 <code>set_env.example.sh</code>에
+            <code>TTS_MODULE_DIR</code>를 추가했습니다.
+          </p>
+        </div>
+
+        <div class="cause">
+          <h3>미니맵 탐지 수신 스레드가 패킷 하나에 영구 정지하던 문제</h3>
+          <p><code>minimap_renderer.py</code>의 UDP 수신 루프가 파싱 예외를 좁게 잡고 있었습니다.</p>
+          <pre><code>except (KeyError, ValueError, json.JSONDecodeError):
+    continue</code></pre>
+          <p>
+            <code>TypeError</code>가 빠져 있습니다. dict가 아닌 JSON(<code>5</code>,
+            <code>[1,2]</code>)이나 <code>angle_offset</code>이 <code>null</code>인 패킷이
+            <strong>한 건만</strong> 들어와도 스레드가 죽고, 그 뒤로 탐지 마커가 영영
+            생기지 않습니다. <code>recvfrom</code>의 <code>OSError</code>도 잡히지
+            않았습니다.
+          </p>
+          <div class="note n-trap">
+            <span class="note-label">1-1에서 겪은 증상과 똑같습니다</span>
+            <p>
+              지도와 로봇 위치는 다른 스레드가 계속 그리므로 화면은 멀쩡해 보입니다 —
+              "작업자 마커가 안 찍힌다"가 <strong>탐지 로직 문제인지 수신 스레드가 죽은
+              것인지 구분이 안 됩니다.</strong> 같은 저장소의
+              <code>vision_inference_node.py</code>는 깨진 UDP 패킷을 세어서 버리고 루프를
+              유지합니다. 두 수신기의 방어 수준이 갈려 있었던 셈입니다.
+            </p>
+          </div>
+          <p class="arrow">
+            파싱을 <code>parse_detection_packet()</code> 순수 함수로 떼어내 넓게 잡고(빈
+            라벨과 NaN 각도도 거름), <code>recvfrom</code>도 감쌌으며, 버린 건수를 10초마다
+            로그로 냅니다. 소켓 없이 검증할 수 있게 분리했으므로
+            <code>test_minimap_logic.py</code>가 깨진 패킷 9종을 직접 먹여 봅니다.
+          </p>
+        </div>
+
+        <div class="cause">
+          <h3>캘리브레이션 주점이 지도 좌표에는 반영되지 않던 문제</h3>
+          <p>
+            1-4 이후 젯슨은 미니맵 방향각을 <strong>실측 주점</strong>(<code>principal_x</code>)
+            기준으로 계산합니다. 그런데 <code>event_detector.py</code>는 여전히 화면
+            중심(<code>jetson_frame_width / 2</code>)을 주점으로 가정하고 3D 좌표를 만듭니다.
+            렌즈 광축이 센서 정중앙에서 벗어난 만큼 지도 위 이벤트가 한쪽으로 밀립니다 —
+            <strong>캘리브레이션으로 얻은 정확도를 마지막 단계에서 다시 잃는 셈</strong>입니다.
+          </p>
+          <p class="arrow">
+            <code>event_detector</code>에 <code>jetson_principal_x</code> /
+            <code>jetson_principal_y</code> 파라미터를 넣었습니다. <strong>0이면 화면 중심을
+            써서 예전과 똑같이 동작하므로</strong>, 값을 안 넘겨도 지금과 달라지는 것은
+            없습니다. 젯슨 시작 로그가 넘길 파라미터를 그대로 찍어 주니 복사해 쓰세요(5단계).
+          </p>
+        </div>
+      </section>
+
+      <!-- ══════════════ 4 ══════════════ -->
+      <section id="s5">
+        <div class="sec-head">
+          <span class="sec-num">05</span>
+          <h2 class="sec-title">어느 파일을 어느 기기에</h2>
+        </div>
+
+        <div class="machine jetson">
+          <div class="machine-top">
+            <h3>젯슨</h3>
+            <span class="badge b-jetson">203.0.113.10 · 재배포 필요</span>
+          </div>
+          <div class="tw">
+            <table>
+              <thead><tr><th>파일</th><th>상태</th><th>묶음</th></tr></thead>
+              <tbody>
+                <tr><td class="file">ai_inference_sender.py</td><td><span class="tag t-mod">수정</span></td><td><span class="day d1">①</span> <span class="day d3">③</span></td></tr>
+                <tr><td class="file">stereo_calibrate.py</td><td><span class="tag t-new">신규</span></td><td><span class="day d1">①</span></td></tr>
+                <tr><td class="file">tts/Rx_pipeline.py</td><td><span class="tag t-mod">수정</span></td><td><span class="day d3">③</span></td></tr>
+                <tr><td class="file">tts/setup_tts.sh</td><td><span class="tag t-new">신규</span></td><td><span class="day d3">③</span></td></tr>
+                <tr><td class="file">tts/Rag_to_Jetson.py</td><td><span class="tag t-new">신규</span></td><td><span class="day d3">③ 자기 시험용</span></td></tr>
+                <tr><td class="file">set_env.example.sh</td><td><span class="tag t-mod">수정</span></td><td><span class="day d4">④</span> PIPER_MODEL_PATH · TTS_MODULE_DIR</td></tr>
+                <tr><td class="file">pipeline/patrol_pipeline_rag.py</td><td><span class="tag t-mod">수정</span></td><td><span class="day d4">④</span> 젯슨에서 직접 돌릴 때만</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note n-warn" style="margin-top:14px;margin-bottom:0">
+            <span class="note-label">주의</span>
+            <p>
+              <strong>person 마킹 수정은 이미 반영·검증하셨지만, 그 뒤 스테레오
+              캘리브레이션과 TTS 수정이 추가됐습니다.</strong> 다시 올려야 합니다.
+            </p>
+            <p>
+              <strong>음성 모델(63MB)은 저장소에 없습니다.</strong> 젯슨에서
+              <code>setup_tts.sh</code>로 받으세요(9단계).
+            </p>
+            <p>
+              <strong>④는 파일만 올려서는 반영되지 않습니다.</strong>
+              <code>set_env.sh</code>를 손봐야 음성 경보가 켜집니다 — 1-1단계.
+            </p>
+          </div>
+        </div>
+
+        <div class="machine daeun">
+          <div class="machine-top">
+            <h3>이다은 노트북</h3>
+            <span class="badge b-daeun">재배포 + colcon build 필요</span>
+          </div>
+          <div class="tw">
+            <table>
+              <thead><tr><th>파일</th><th>상태</th><th>묶음</th></tr></thead>
+              <tbody>
+                <tr><td class="file">dashboard_link/minimap_renderer.py</td><td><span class="tag t-mod">수정</span></td><td><span class="day d1">①</span> <span class="day d2">②</span> <span class="day d3">③</span> <span class="day d4">④</span></td></tr>
+                <tr><td class="file">dashboard_link/minimap_web.html</td><td><span class="tag t-mod">수정</span></td><td><span class="day d1">08-28</span> <span class="day d2">08-29</span></td></tr>
+                <tr><td class="file">smart_factory_sim/auto_mapper.py</td><td><span class="tag t-mod">수정</span></td><td><span class="day d1">08-28</span> <span class="day d2">08-29</span></td></tr>
+                <tr><td class="file">run_real_autonomous_mapping.sh</td><td><span class="tag t-mod">수정</span></td><td><span class="day d1">08-28</span></td></tr>
+                <tr><td class="file">smart_factory_sim/patrol_planner.py</td><td><span class="tag t-new">신규</span></td><td><span class="day d2">08-29</span></td></tr>
+                <tr><td class="file">smart_factory_sim/stall_monitor.py</td><td><span class="tag t-new">신규</span></td><td><span class="day d2">08-29</span></td></tr>
+                <tr><td class="file">smart_factory_sim/patrol_node.py</td><td><span class="tag t-mod">수정</span></td><td><span class="day d2">08-29</span></td></tr>
+                <tr><td class="file">maps/clean_map.py</td><td><span class="tag t-new">신규</span></td><td><span class="day d2">08-29</span></td></tr>
+                <tr><td class="file">maps/*.yaml (3), maps/generate_map.py</td><td><span class="tag t-mod">수정</span></td><td><span class="day d2">08-29</span></td></tr>
+                <tr><td class="file">config/real_turtlebot3_lds_2d.lua</td><td><span class="tag t-mod">주석</span></td><td><span class="day d2">08-29</span></td></tr>
+                <tr><td class="file">setup.py</td><td><span class="tag t-mod">수정</span></td><td><span class="day d2">08-29</span></td></tr>
+                <tr><td class="file">smart_factory_sim/event_detector.py</td><td><span class="tag t-mod">수정</span></td><td><span class="day d4">④</span> 주점 파라미터</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="machine sangmin">
+          <div class="machine-top">
+            <h3>이상민 PC</h3>
+            <span class="badge b-sangmin">이번엔 재배포 필요</span>
+          </div>
+          <p>08-28 때와 달리 대시보드 코드가 바뀌었습니다.</p>
+          <div class="tw">
+            <table>
+              <thead><tr><th>파일</th><th>상태</th><th>내용</th></tr></thead>
+              <tbody>
+                <tr><td class="file">edge_video/dashboard_video_minimap_section.py</td><td><span class="tag t-mod">수정</span></td><td>순찰 제어 패널 추가</td></tr>
+                <tr><td class="file">pipeline/patrol_pipeline_rag.py</td><td><span class="tag t-mod">수정</span></td><td><span class="day d4">④</span> TTS 모듈 경로 후보</td></tr>
+                <tr><td class="file">dashboard/smart_factory_dashboard_v3.py</td><td><span class="tag t-mod">수정</span></td><td>패널 배치 + 헬퍼 이동</td></tr>
+                <tr><td class="file">self_test/*</td><td><span class="tag t-new">신규 6</span></td><td>검증용 (배포와 무관)</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="note n-info" style="margin-top:14px;margin-bottom:0">
+            <span class="note-label">두 파일을 함께</span>
+            <p>
+              <code>_full_width_kwargs</code>가 대시보드에만 있어 순환 참조가 되기에,
+              복사 대신 미니맵 섹션 모듈로 <strong>이동</strong>했습니다(호출부 8곳
+              무수정). 한쪽만 올리면 import 오류가 납니다.
+            </p>
+          </div>
+        </div>
+
+        <h3>저장소 설정 · 문서 (배포 불필요)</h3>
+        <div class="note n-info">
+          <span class="note-label">.gitattributes (신규)</span>
+          <p>
+            이건 문서가 아니라 <strong>배포 안전장치</strong>입니다(3장 CRLF 절).
+            저장소에 넣어 두기만 하면 이후 체크아웃부터 셸 스크립트가 LF로 유지되어
+            <code>scp</code> 복사가 안전해집니다.
+          </p>
+        </div>
+        <p class="wide">
+          그 외: 각 폴더 README 5개, <code>.gitignore</code>
+        </p>
+      </section>
+
+      <!-- ══════════════ 4 ══════════════ -->
+      <section id="s6">
+        <div class="sec-head">
+          <span class="sec-num">06</span>
+          <h2 class="sec-title">수행 절차</h2>
+        </div>
+
+        <div class="note n-info">
+          <span class="note-label">순서가 중요합니다</span>
+          <p>
+            젯슨 캘리브레이션에서 나온 초점거리를 다은님 쪽
+            <code>event_detector</code>에 넣어야 하므로 <strong>젯슨 → 다은 노트북</strong>
+            순으로 진행하세요.
+          </p>
+        </div>
+
+        <div class="step">
+          <div class="step-mark">0</div>
+          <div class="step-body">
+            <h3>자체 테스트로 코드 상태 확인 <span class="badge b-sangmin">상민 PC</span></h3>
+            <pre><code>cd "데이터 플랫폼 및 대시보드(이상민)"
+Get-ChildItem self_test\test_*.py | ForEach-Object { python $_.FullName }</code></pre>
+            <p>15개가 모두 <code>모든 테스트 통과!</code>로 끝나야 합니다.</p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-mark">1</div>
+          <div class="step-body">
+            <h3>파일 올리기 (비전 2 + TTS 폴더) <span class="badge b-jetson">젯슨</span></h3>
+            <pre><code><span class="cmt"># 비전</span>
+scp smart_factory_project/ai_inference_sender.py  젯슨:~/smart_factory_project/
+scp smart_factory_project/stereo_calibrate.py     젯슨:~/smart_factory_project/
+<span class="cmt"># TTS</span>
+scp -r smart_factory_project/tts                  젯슨:~/smart_factory_project/
+<span class="cmt"># 환경변수 템플릿 — ④에서 바뀌었습니다. 1-1단계에서 씁니다</span>
+scp smart_factory_project/set_env.example.sh      젯슨:~/smart_factory_project/</code></pre>
+            <p>비전 두 파일이 <strong>같은 폴더</strong>에 있어야 합니다(sender가 옆에서 import). 확인:</p>
+            <pre><code>grep -c HELMET_SAFETY_MARGIN ai_inference_sender.py   <span class="cmt"># 1 이상</span>
+grep -c load_rectifier       ai_inference_sender.py   <span class="cmt"># 1 이상</span>
+grep -c camera_capture_loop  ai_inference_sender.py   <span class="cmt"># 1 이상 (③ 영상 속도)</span>
+ls stereo_calibrate.py</code></pre>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-mark">1·1</div>
+          <div class="step-body">
+            <h3><code>set_env.sh</code> 손보기 <span class="badge b-jetson">젯슨</span></h3>
+            <div class="note n-trap">
+              <span class="note-label">파일만 올려서는 반영되지 않는 값들입니다</span>
+              <p>
+                특히 <code>PIPER_MODEL_PATH</code>를 그대로 두면 TTS 수신기가 없는 파일을
+                가리켜 <strong>경보마다 합성에 실패합니다.</strong> 증상은 무음 하나뿐이라
+                로그를 안 보면 모릅니다.
+              </p>
+            </div>
+            <p>기존 <code>set_env.sh</code>의 DB 비밀번호와 IP는 옮겨 적고, 새 템플릿을 기준으로 아래를 확인하세요.</p>
+            <div class="tw">
+              <table>
+                <thead><tr><th>변수</th><th>예전 템플릿</th><th>젯슨에 넣을 값</th></tr></thead>
+                <tbody>
+                  <tr><td class="file">PIPER_MODEL_PATH</td><td><code>/opt/models/…hyeri…</code></td><td><code>$HOME/smart_factory_project/tts/ko_KR-kss-medium.onnx</code></td></tr>
+                  <tr><td class="file">TTS_MODULE_DIR</td><td>없음 (새로 추가)</td><td><code>$HOME/smart_factory_project/tts</code><br><span style="color:var(--muted)"><strong>지금은 효과 없음</strong> — 이 값을 읽는 <code>patrol_pipeline_rag.py</code>가 젯슨에서 안 돕니다(9장). 넣어 두어도 무해합니다</span></td></tr>
+                  <tr><td class="file">DAEUN_LAPTOP_IP</td><td><code>192.168.0.yyy</code></td><td>다은님 노트북 <strong>실제</strong> IP</td></tr>
+                  <tr><td class="file">DASHBOARD_IP</td><td><code>192.168.0.xxx</code></td><td>상민님 PC 실제 IP</td></tr>
+                  <tr><td class="file">ROS2_BRIDGE_IP</td><td><code>127.0.0.1</code></td><td><code>--network host</code>면 그대로, 아니면 <code>172.17.0.1</code></td></tr>
+                  <tr><td class="file">TTS_TOKEN</td><td>주석 처리</td><td>값을 만들어 넣기를 권합니다</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="note n-warn">
+              <span class="note-label">TTS 수신기는 서버가 아니라 스피커입니다</span>
+              <p>
+                토큰 없이 <code>0.0.0.0:9997</code>로 열어 두면 같은 망의 누구든 공장
+                방송으로 아무 문장이나 내보낼 수 있습니다. 값을 만들어
+                <strong>젯슨과 상민님 PC 양쪽에 같은 값</strong>을 넣으세요.
+              </p>
+            </div>
+            <pre><code>source set_env.sh
+echo "$PIPER_MODEL_PATH"   <span class="cmt"># kss 가 보여야 합니다. hyeri 면 미해결</span>
+echo "$TTS_MODULE_DIR"     <span class="cmt"># ~/smart_factory_project/tts</span></code></pre>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-mark">2</div>
+          <div class="step-body">
+            <h3>스테레오 캘리브레이션 (최초 1회) <span class="badge b-jetson">젯슨</span></h3>
+            <div class="note n-info">
+              <span class="note-label">비전 코드는 컨테이너 안 /data 에서 돕니다</span>
+              <p>
+                호스트의 <code>/home/<user>/jetson-containers/data/</code> 가 그대로 보이는
+                자리이고, <strong>센더가 <code>stereo_calibration.npz</code> 를 읽는 바로
+                그 폴더</strong>라 복사도 환경변수도 필요 없습니다. 촬영본과 npz 는
+                컨테이너를 지워도 호스트에 남습니다.
+              </p>
+            </div>
+            <p>컨테이너 이름에는 실행 시각이 붙어 다시 띄울 때마다 바뀝니다. 변수에 담아 쓰세요.</p>
+            <pre><code><span class="cmt"># 젯슨 터미널 — 터미널을 새로 열 때마다 한 번</span>
+JC=$(docker ps --format '{{.Names}}' | grep -m1 jetson_container)
+echo "$JC"</code></pre>
+            <div class="note n-warn">
+              <span class="note-label">먼저 센더를 끄세요</span>
+              <p><code>/dev/video0</code> 은 한 번에 한 프로세스만 엽니다. 센더가 잡고 있으면 캘리브레이션이 카메라를 못 엽니다.</p>
+            </div>
+            <pre><code><span class="cmt"># 젯슨 터미널 — 전부 컨테이너 안에서</span>
+docker exec -it "$JC" bash -lc 'cd /data &amp;&amp; python3 stereo_calibrate.py doctor'
+docker exec -it "$JC" bash -lc 'cd /data &amp;&amp; python3 stereo_calibrate.py capture --count 20'
+docker exec -it "$JC" bash -lc 'cd /data &amp;&amp; python3 stereo_calibrate.py calibrate'
+docker exec -it "$JC" bash -lc 'cd /data &amp;&amp; python3 stereo_calibrate.py verify'
+docker exec -it "$JC" bash -lc 'cd /data &amp;&amp; python3 stereo_calibrate.py report'</code></pre>
+            <div class="note n-trap">
+              <span class="note-label">stereo_calibrate.py 를 /data 에 함께 올려야 합니다</span>
+              <p>
+                지금까지 <code>ai_inference_sender.py</code> 만 올라갔습니다. 센더는 그
+                import 를 <code>try/except</code> 로 감싸므로 <strong>에러 없이
+                추측값(f=500)으로 돕니다</strong> — 1.5m 를 0.83m 로 읽는 상태입니다.
+              </p>
+              <p>
+                <strong>카메라 백엔드</strong>: 백엔드를 안 주면 OpenCV 가 GStreamer 를
+                골라 <code>Internal data stream error</code> 와 함께 <code>0x0</code> 으로
+                죽습니다. 센더에는 V4L2 처리가 있었지만 <code>stereo_calibrate.py</code>
+                에는 없어서 <strong>센더는 되는데 캘리브레이션만 안 되는</strong>
+                상태였습니다. 이제 두 파일이 같은 방식으로 엽니다.
+                (<code>v4l2-ctl</code> 은 젯슨에 기본 설치돼 있지 않습니다 —
+                <code>sudo apt install -y v4l-utils</code>)
+              </p>
+            </div>
+
+            <h4><code>doctor</code>를 먼저 돌리세요</h4>
+            <div class="note n-trap">
+              <span class="note-label">capture 가 멈춘 것처럼 보이는 이유</span>
+              <p>
+                체스보드를 못 알아보면 <strong>화면에 아무것도 안 나오면서 계속
+                돕니다.</strong> 게다가 미탐지 한 번이 장면에 따라 프레임당
+                0.3~2.6초라(텍스처가 많을수록 느림), 좌우 두 장이면 그 두 배입니다.
+                자세를 바꿔도 몇 초씩 반응이 없어서 <strong>멈춘 것과 구분이 안
+                됩니다.</strong>
+              </p>
+            </div>
+            <div class="tw">
+              <table>
+                <thead><tr><th>원인</th><th>증상</th><th>해결</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>카메라가 스테레오가 아님</td>
+                    <td>요청한 2560x720 을 거부하고 1280x720 을 줌. 한 장을 반으로 쪼개니 <strong>오른쪽 눈에 보드가 절반만</strong> 들어가 영원히 못 찾음</td>
+                    <td><code>v4l2-ctl --list-formats-ext -d /dev/video0</code></td>
+                  </tr>
+                  <tr>
+                    <td>체스보드 규격이 다름</td>
+                    <td>인쇄물이 <code>9x6</code> 내부 코너가 아님. <strong>칸 수와 내부 코너 수를 헷갈리는 것이 가장 흔합니다</strong> (10x7 칸 = 9x6 코너)</td>
+                    <td><code>doctor</code>가 흔한 규격 12종을 시험해 맞는 것을 알려줍니다</td>
+                  </tr>
+                  <tr>
+                    <td>한쪽 눈에만 들어옴</td>
+                    <td>보드가 화면 가장자리에 있음</td>
+                    <td>가운데로 옮기거나 뒤로 물러나기</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <p>
+              <code>doctor</code>는 지금 카메라가 보는 화면을
+              <code>calib_shots/doctor_left.png</code>·<code>doctor_right.png</code>로
+              저장합니다. <strong>두 장이 서로 조금 어긋난 같은 장면</strong>이어야
+              합니다. 한 장면의 왼쪽/오른쪽 절반이면 스테레오 카메라가 아닙니다.
+            </p>
+            <p>이제 <code>capture</code>도 2초마다 무엇이 보이는지 알려줍니다.</p>
+            <pre class="term"><code>  [3/20] 탐색 중 — 최근 12프레임: 양쪽 1 · 왼쪽만 9 · 오른쪽만 0 · 못 찾음 2
+      한쪽 눈에만 보입니다. 체스보드를 오른쪽으로 조금 옮기거나 뒤로 물러나
+      **양쪽 화면에 다 들어오게** 하세요.</code></pre>
+            <h4>촬영이 제일 중요합니다 — 기울기와 화면 위치를 <em>따로</em> 섞으세요</h4>
+            <p>
+              "왼쪽에 둘 때는 항상 왼쪽으로 기울인다" 같은 습관이 생기면 초점거리와
+              주점이 서로 상쇄되는 엉뚱한 해로 수렴합니다.
+            </p>
+            <div class="tw">
+              <table>
+                <thead><tr><th>촬영 세트</th><th>스테레오 RMS</th><th>복원한 f (정답 900px)</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td>기울기와 위치가 <strong>상관됨</strong></td>
+                    <td class="num">0.76 px <span style="color:var(--muted)">(기준 통과!)</span></td>
+                    <td class="num" style="color:var(--danger);font-weight:600">1388 px (+54%)</td>
+                  </tr>
+                  <tr>
+                    <td>기울기와 위치가 <strong>독립</strong></td>
+                    <td class="num">0.14 px</td>
+                    <td class="num" style="color:var(--ok);font-weight:600">911 px (+1.2%)</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="note n-trap">
+              <span class="note-label">함정</span>
+              <p>
+                <strong>RMS만으로는 못 거릅니다.</strong> <code>calibrate</code>가 주점이
+                화면 중심에서 10% 넘게 벗어나면 따로 경고합니다. 그 경고가 뜨면 RMS가
+                좋아도 다시 촬영하세요.
+              </p>
+            </div>
+            <div class="note n-pass">
+              <span class="note-label">합격 기준</span>
+              <p>
+                <code>verify</code> 정렬 오차 <strong>0.5px 이하</strong> · RMS
+                <strong>1.0px 이하</strong> · 주점 경고 없음.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-mark">3</div>
+          <div class="step-body">
+            <h3>재시작하고 로그 확인 <span class="badge b-jetson">젯슨</span></h3>
+            <pre class="term"><code>🎯 [캘리브레이션] 적용됨 — 좌우 영상을 정렬(rectify)합니다
+     초점거리 f : 912.4 px (수평 화각 약 70도)
+     렌즈 간격 B: 60.2 mm
+🎞  [FPS 점검]    요청: 30 | 카메라 보고값: 15.0
+     ⚠ 카메라가 요청 FPS 를 거부했습니다. 이 값이 영상 속도의 상한입니다.
+🖼  [스트리밍]    목표 30fps · JPEG 품질 95</code></pre>
+            <div class="note n-warn">
+              <span class="note-label">FPS 경고가 뜨면</span>
+              <p>
+                영상 속도의 상한이 거기서 정해집니다. 해상도를 낮추는 것 말고는
+                방법이 없습니다. 경고가 없으면 다음 단계로 넘어가세요.
+              </p>
+            </div>
+            <h4>영상이 느리면 — <code>/health</code>로 병목 확인</h4>
+            <pre><code>curl http://&lt;젯슨IP&gt;:8500/health</code></pre>
+            <p>
+              <code>capture_fps</code>와 <code>rectify_ms</code> 두 값이면 대개 판단이
+              됩니다(3장 표 참고). 가장 먼저 시도할 것:
+            </p>
+            <pre><code>export JPEG_QUALITY=80     <span class="cmt"># 인코딩 비용과 대역폭을 함께 줄입니다</span></code></pre>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-mark">4</div>
+          <div class="step-body">
+            <h3>파일 반영 + 빌드 <span class="badge b-daeun">다은 노트북</span></h3>
+            <pre><code>cd "ROS2_자율주행_및_연동(이다은)"
+colcon build --packages-select smart_factory_sim
+source install/setup.bash</code></pre>
+            <div class="note n-trap">
+              <span class="note-label">빌드를 빼먹지 마세요</span>
+              <p>
+                <code>install/</code>에 구버전 사본이 남아 있어서 <code>ros2 run</code>으로
+                실행하면 옛 코드가 돕니다. 이번엔 <code>patrol_planner.py</code>와
+                <code>stall_monitor.py</code>가 <strong>새 파일</strong>이라 빌드 없이는
+                아예 없습니다.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-mark">5</div>
+          <div class="step-body">
+            <h3><code>event_detector</code>에 초점거리와 주점 전달 <span class="badge b-daeun">다은 노트북</span></h3>
+            <p>
+              파일 수정이 아니라 <strong>런타임 파라미터</strong>입니다. 기본값
+              <code>500.0</code>을 그대로 두면 젯슨이 옳은 거리를 보내도 지도 좌표가
+              틀어집니다.
+            </p>
+            <pre><code>ros2 run smart_factory_sim event_detector --ros-args \
+  -p jetson_focal_length:=912.4 \
+  -p jetson_frame_width:=1280.0 \
+  -p jetson_frame_height:=720.0 \
+  -p jetson_principal_x:=641.8 \
+  -p jetson_principal_y:=358.2</code></pre>
+            <div class="note n-info">
+              <span class="note-label">젯슨 시작 로그가 이 줄을 그대로 찍어 줍니다</span>
+              <p>
+                3단계 로그의 <code>※ event_detector.py 에 아래를 그대로 주세요</code>
+                밑줄을 복사하면 됩니다. <code>jetson_principal_x/y</code>는 ④에서 새로
+                생긴 파라미터이고, <strong>안 넘기면 화면 중심을 써서 예전과 똑같이
+                동작하므로</strong> 값을 모르면 빼도 됩니다.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-mark">6</div>
+          <div class="step-body">
+            <h3>낮은 장애물 감시 시작 <span class="badge b-daeun">다은 노트북</span></h3>
+            <pre><code>ros2 run smart_factory_sim stall_monitor</code></pre>
+            <p>Nav2 경로 계획에서도 피하게 하려면 <code>config/nav2_params.yaml</code>의 두 코스트맵에 필터를 추가하세요.</p>
+            <pre><code>filters: ["keepout_filter"]
+keepout_filter:
+  plugin: "nav2_costmap_2d::KeepoutFilter"
+  enabled: True
+  filter_info_topic: "/costmap_filter_info"</code></pre>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-mark">7</div>
+          <div class="step-body">
+            <h3>대시보드 반영 <span class="badge b-sangmin">상민 PC</span></h3>
+            <p>두 파일을 올리고 Streamlit을 재시작합니다.</p>
+            <pre><code>edge_video/dashboard_video_minimap_section.py
+dashboard/smart_factory_dashboard_v3.py</code></pre>
+            <div class="note n-warn">
+              <span class="note-label">토큰</span>
+              <p>
+                <strong>미니맵 서버에 <code>MINIMAP_TOKEN</code>이 설정돼 있어야 순찰
+                제어가 열립니다.</strong> 대시보드 쪽에도 같은 값을 넣으세요 — 없으면
+                버튼이 403을 받습니다.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-mark">8</div>
+          <div class="step-body">
+            <h3>순찰 시작</h3>
+            <p>
+              로봇 상태창 아래 <strong>순찰 제어</strong> 패널에서
+              <code>▶ 순찰 시작</code> → 확인. 시작 전에 "지금 지도 기준 N개 지점 ·
+              한 바퀴 Xm" 미리보기가 뜹니다.
+            </p>
+            <p>
+              미니맵 페이지(<code>http://&lt;다은IP&gt;:8091/</code>) 좌하단에도 같은
+              버튼이 있습니다.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-mark">9</div>
+          <div class="step-body">
+            <h3>TTS 준비 (최초 1회) <span class="badge b-jetson">젯슨</span></h3>
+            <p>음성 모델은 저장소에 없습니다(63MB). 젯슨에서 받아야 합니다.</p>
+            <pre><code>cd ~/smart_factory_project/tts
+chmod +x setup_tts.sh
+./setup_tts.sh</code></pre>
+            <p>이 스크립트가 순서대로 짚습니다.</p>
+            <ol class="prose">
+              <li><code>piper</code> / <code>aplay</code> 설치 확인</li>
+              <li><code>ko_KR-kss-medium.onnx</code> <strong>와</strong> <code>.onnx.json</code> 내려받기 (둘은 항상 짝)</li>
+              <li><code>aplay -l</code>을 읽어 <strong>USB 스피커</strong> 선택</li>
+              <li>실제로 합성해서 재생 — <strong>소리가 들리는지 귀로 확인하세요</strong></li>
+            </ol>
+            <div class="note n-warn">
+              <span class="note-label">USB 스피커라 3번이 중요합니다</span>
+              <p>
+                젯슨 기본 출력이 HDMI라, 자동 선택이 없으면 스피커를 꽂아도 무음인데
+                <code>aplay</code>는 성공으로 끝납니다.
+              </p>
+            </div>
+            <p>소리가 안 들리면:</p>
+            <pre><code>alsamixer      <span class="cmt"># 볼륨 확인. M 키로 음소거 해제</span>
+aplay -l       <span class="cmt"># 카드가 잡혀 있는지</span>
+lsusb          <span class="cmt"># USB 인식 자체가 되는지</span></code></pre>
+            <p>
+              장치를 고정하려면 <strong>번호가 아니라 이름</strong>으로 — USB는
+              재부팅·재연결로 번호가 바뀝니다.
+            </p>
+            <pre><code>export APLAY_DEVICE=plughw:CARD=Device,DEV=0</code></pre>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-mark">10</div>
+          <div class="step-body">
+            <h3>TTS 수신기 실행 <span class="badge b-jetson">젯슨</span></h3>
+            <pre><code>cd ~/smart_factory_project/tts
+python3 Rx_pipeline.py</code></pre>
+            <p>시작 로그에 모델과 출력 장치가 찍힙니다.</p>
+            <pre class="term"><code>🔊 [Jetson TTS Receiver] 대응안 수신 대기 (0.0.0.0:9997)
+   모델: /home/jetson/smart_factory_project/tts/ko_KR-kss-medium.onnx
+   출력 장치: plughw:CARD=Device,DEV=0 (USB Audio Device)</code></pre>
+            <div class="note n-trap">
+              <span class="note-label">이 수신기는 데이터 서버가 아니라 액추에이터입니다</span>
+              <p>
+                같은 망의 누구든 TCP로 문장을 던지면 공장 스피커가 그대로 읽습니다.
+                운영 시에는 제한하세요.
+              </p>
+              <pre><code>export TTS_BIND_IP=203.0.113.10
+export TTS_TOKEN=$(python3 -c "import secrets;print(secrets.token_urlsafe(16))")</code></pre>
+              <p>
+                <strong>보내는 쪽(상민님 PC)의 <code>set_env</code>에도 같은
+                <code>TTS_TOKEN</code>을 넣어야 합니다.</strong> 한쪽만 켜면 재생되지
+                않고 거부 로그만 남습니다.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-mark">11</div>
+          <div class="step-body">
+            <h3>방송 확인 <span class="badge b-sangmin">상민 PC</span></h3>
+            <pre><code>JETSON_IP=203.0.113.10 python3 "TTS Engine and pipeline/Rag_to_Jetson.py" "테스트 방송입니다"</code></pre>
+            <p>
+              스피커에서 들리면 연동 완료입니다. 대시보드에서는 대응안 옆
+              <strong>🔊 현장 음성 안내</strong> 버튼으로 나갑니다 — 자동 방송이 아니라
+              관제자가 눌러야 나갑니다. 오탐이 한 번 섞이면 되돌릴 수 없기 때문입니다.
+            </p>
+          </div>
+        </div>
+
+        <div class="step">
+          <div class="step-mark">＋</div>
+          <div class="step-body">
+            <h3>(필요할 때) 지도 정리 <span class="badge b-daeun">다은 노트북</span></h3>
+            <p>가구가 있는 상태로 매핑했다면:</p>
+            <pre><code>cd "ROS2_자율주행_및_연동(이다은)/maps"
+python3 clean_map.py factory_map --dry-run   <span class="cmt"># 무엇이 지워질지 확인</span>
+python3 clean_map.py factory_map             <span class="cmt"># 정리본 + 검토 그림</span></code></pre>
+            <p><code>_clean_review.png</code>의 빨간 점을 <strong>눈으로 확인한 뒤</strong> 쓰세요.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ══════════════ 5 ══════════════ -->
+      <section id="s7">
+        <div class="sec-head">
+          <span class="sec-num">07</span>
+          <h2 class="sec-title">반영됐는지 확인하는 법</h2>
+        </div>
+        <div class="tw">
+          <table>
+            <thead><tr><th>무엇</th><th>어디서</th><th>무엇을 봐야 하나</th></tr></thead>
+            <tbody>
+              <tr>
+                <td>작업자 마킹</td>
+                <td class="file">http://&lt;다은IP&gt;:8091/</td>
+                <td>사람 앞에 섰을 때 <strong>파란 점 + "작업자"</strong>. 안전모 쓴 사람이 "헬멧 미착용"으로 뜨지 않아야 함</td>
+              </tr>
+              <tr><td>빨간 점 제거</td><td>같은 화면</td><td>지도에 빨간 점 없음, 범례에서도 항목이 사라짐</td></tr>
+              <tr><td>캘리브레이션</td><td>젯슨 시작 로그</td><td><code>🎯 [캘리브레이션] 적용됨</code></td></tr>
+              <tr><td>거리 정확도</td><td>DB <code>patrol_logs</code></td><td>줄자로 잰 거리와 <code>distance_meter</code>가 맞는지, <code>-1</code> 비율이 줄었는지</td></tr>
+              <tr>
+                <td>자율 매핑</td><td>매핑 터미널</td>
+                <td><code>Robot pose acquired; exploration memory active.</code><br><code>Area already covered: turning +137 deg toward unexplored area.</code></td>
+              </tr>
+              <tr><td>순찰 경로</td><td>대시보드 순찰 패널</td><td>"N개 지점 · 한 바퀴 Xm" 미리보기가 뜨는지. 미니맵에 경로 선이 그려지는지</td></tr>
+              <tr><td>순찰 상태</td><td>로봇 상태창</td><td><code>대기</code> → <code>순찰 중 1/N</code> 으로 바뀌는지</td></tr>
+              <tr>
+                <td>낮은 장애물</td><td><code>stall_monitor</code> 터미널</td>
+                <td>일부러 문턱에 걸어보면 <code>낮은 장애물로 보입니다: (x, y)</code></td>
+              </tr>
+              <tr><td></td><td>미니맵</td><td>그 자리에 <strong>주황 X</strong>가 뜨는지</td></tr>
+              <tr><td>TTS 준비</td><td>젯슨 <code>./setup_tts.sh</code></td><td>4단계까지 ✅. <strong>소리를 귀로 확인</strong></td></tr>
+              <tr><td>TTS 수신기</td><td>젯슨 시작 로그</td><td><code>출력 장치: plughw:CARD=...</code>가 <strong>USB</strong>인지 (HDMI면 스피커 연결 확인)</td></tr>
+              <tr><td>TTS 방송</td><td>상민님 PC</td><td><code>Rag_to_Jetson.py "테스트"</code> → 스피커에서 들리는지</td></tr>
+              <tr><td>TTS 버튼</td><td>대시보드 대응안 패널</td><td>🔊 버튼 → "젯슨으로 보냈습니다" + 실제 소리</td></tr>
+              <tr><td>영상 속도</td><td>젯슨 <code>/health</code></td><td><code>stream_fps</code>가 목표에 가까운지. 낮으면 <code>capture_fps</code>부터 확인</td></tr>
+              <tr><td>인코딩 캐시</td><td>젯슨 <code>/health</code></td><td>화면을 <strong>두 곳에서</strong> 열고 <code>encode_reuse</code>가 <code>encode_miss</code>보다 큰지</td></tr>
+              <tr><td>시차 최적화</td><td>젯슨 <code>/health</code></td><td>사람 없는 화면에서 <code>stereo_skipped</code>가 계속 늘고 <code>stereo_ran</code>은 안 느는지</td></tr>
+              <tr><td>TTS 모듈 경로 <span class="day d4">④</span></td><td><strong>상민님 PC</strong> 파이프라인 시작 로그</td><td><code>음성 경보 켜짐 -&gt; …:9997</code>이 뜨는지. 젯슨에서는 이 파이프라인이 안 돌므로 확인 대상이 아닙니다(9장)</td></tr>
+              <tr><td>음성 모델 <span class="day d4">④</span></td><td>젯슨 TTS 시작 로그</td><td><code>모델: …/ko_KR-kss-medium.onnx</code>. <strong><code>hyeri</code>가 보이면 아직 안 고쳐진 것</strong></td></tr>
+              <tr><td>탐지 수신 <span class="day d4">④</span></td><td>미니맵 터미널</td><td>오래 돌린 뒤에도 탐지 마커가 계속 갱신되는지. 잡패킷이 오면 <code>형식이 맞지 않는 패킷 N건 폐기</code>로 알려줍니다</td></tr>
+              <tr><td>주점 반영 <span class="day d4">④</span></td><td><code>event_detector</code> 실행 명령</td><td><code>-p jetson_principal_x:=</code>를 넘겼는지. 안 넘겨도 예전과 같이 동작합니다</td></tr>
+              <tr><td>셸 실행</td><td>젯슨</td><td><code>./setup_tts.sh</code>가 <code>bad interpreter</code> 없이 뜨는지</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ══════════════ 6 ══════════════ -->
+      <section id="s8">
+        <div class="sec-head">
+          <span class="sec-num">08</span>
+          <h2 class="sec-title">되돌리는 법</h2>
+        </div>
+        <p>08-29 작업분은 커밋 전이라 파일 단위로 되돌릴 수 있습니다.</p>
+        <pre><code>git checkout -- "ROS2_자율주행_및_연동(이다은)/smart_factory_sim/patrol_node.py"</code></pre>
+        <p>기기에 이미 올린 뒤라면 <strong>코드를 되돌리지 않고 기능만 끄는 쪽</strong>이 간단합니다.</p>
+        <div class="tw">
+          <table>
+            <thead><tr><th>끄고 싶은 것</th><th>방법</th></tr></thead>
+            <tbody>
+              <tr><td>자율 매핑 탐색 기억</td><td><code>AUTO_VISIT_WEIGHT=0 AUTO_REVISIT_LIMIT=0</code></td></tr>
+              <tr><td>스테레오 정렬</td><td><code>stereo_calibration.npz</code>를 다른 이름으로 옮기면 예전 추측값으로 동작</td></tr>
+              <tr><td>안전모 판정 성향</td><td><code>HELMET_SAFETY_MARGIN=0</code>이면 순수 점수 비교</td></tr>
+              <tr><td>낮은 장애물 감시</td><td><code>stall_monitor</code>를 띄우지 않으면 됩니다 (다른 노드는 그대로 동작)</td></tr>
+              <tr><td>낮은 장애물 기록</td><td><code>/blind_obstacle_control</code>에 <code>{"command":"clear"}</code></td></tr>
+              <tr><td>순찰 제어</td><td><code>MINIMAP_TOKEN</code>을 비우면 제어가 아예 닫힙니다</td></tr>
+              <tr><td>지도 정리본</td><td>원본을 그대로 두었으므로 <code>_clean</code> 파일만 지우면 됩니다</td></tr>
+              <tr><td>TTS 자동 방송</td><td>파이프라인에서 <code>--tts</code>를 빼면 됩니다 (대시보드 버튼은 그대로)</td></tr>
+              <tr><td>TTS 전체</td><td><code>Rx_pipeline.py</code>를 띄우지 않으면 됩니다. 송신은 실패 로그만 남기고 나머지는 그대로 동작</td></tr>
+              <tr><td>USB 자동 탐색</td><td><code>APLAY_AUTODETECT=0</code>이면 시스템 기본 장치를 씁니다</td></tr>
+              <tr><td>영상 화질(속도)</td><td><code>JPEG_QUALITY=95</code>가 기본. 낮출수록 빨라집니다</td></tr>
+              <tr><td>스트리밍 속도</td><td><code>STREAM_FPS</code> / <code>CAMERA_FPS</code>로 조절</td></tr>
+              <tr><td>좌우 정렬 비용</td><td><code>stereo_calibration.npz</code>를 치우면 remap이 빠집니다 (거리는 추측값으로)</td></tr>
+              <tr><td>TTS 모듈 경로 자동 탐색</td><td><code>TTS_MODULE_DIR</code>를 직접 지정하면 후보 탐색을 건너뜁니다</td></tr>
+              <tr><td>주점 보정</td><td><code>jetson_principal_x/y</code>를 안 넘기거나 <code>0</code>으로 주면 화면 중심(예전 동작)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ══════════════ 7 ══════════════ -->
+      <section id="s9">
+        <div class="sec-head">
+          <span class="sec-num">09</span>
+          <h2 class="sec-title">남은 작업</h2>
+        </div>
+
+        <div class="note n-info">
+          <span class="note-label">④의 결함 넷은 아직 겪은 적이 없습니다</span>
+          <p>
+            TTS와 캘리브레이션이 젯슨에 배포되기 전이라 그 코드가 실제로 돈 적이 없기
+            때문입니다. 다만 넷 다 실패해도 예외가 나지 않는 종류라, 배포한 뒤에 걸리면
+            원인 찾기가 어렵습니다. <strong>음성 모델 경로는 안내대로 따라 하면 반드시
+            걸리므로</strong> 1·1단계를 꼭 거치세요. TTS 모듈 경로와 주점은 각각 젯슨
+            번들을 완성하거나 캘리브레이션을 마쳐야 비로소 관련됩니다.
+          </p>
+        </div>
+
+        <div class="note n-trap">
+          <span class="note-label"><code>patrol_pipeline_rag.py</code>는 젯슨에서 실행되지 않습니다</span>
+          <p>
+            <code>main()</code>이 <code>from integration.response_agent import
+            RagResponseAgent</code>를 하는데 <code>smart_factory_project/</code>에는
+            <code>integration/</code> 폴더가 없어
+            <code>ModuleNotFoundError: No module named &#39;integration&#39;</code>으로
+            끝납니다. <code>--help</code>는 argparse가 그 줄 전에 빠져나가므로 통과해서,
+            실제로 돌려야 드러납니다.
+          </p>
+          <p>
+            커밋 <code>9e94dde</code>에서 <code>pipeline/</code>을 통째로 미러링할 때 짝인
+            <code>integration/</code> 없이 딸려 온 것으로, <strong>젯슨에서 실행하도록
+            설계된 적이 없습니다</strong> — 자기 docstring도 상민님 폴더에만 있는
+            <code>run_pipeline_rag.sh</code>를 쓰라고 안내합니다.
+            <code>run_pipeline.sh</code>는 기본 파이프라인을 부르므로
+            <strong>현재 운용에는 지장이 없습니다.</strong>
+          </p>
+          <p>
+            정리하려면 셋 중 하나 — 그대로 두기 / <code>integration/</code>(과
+            <code>--use-llm</code>이면 <code>rag/</code>)도 함께 올리기 / 번들에서 빼기.
+          </p>
+        </div>
+
+        <div class="note n-trap">
+          <span class="note-label">가장 먼저 확인할 것</span>
+          <p>
+            <strong><code>DAEUN_LAPTOP_IP</code>가 아직 추정값
+            <code>203.0.113.20</code>입니다.</strong> 틀리면 미니맵 탐지 각도(UDP 9091)가
+            <strong>에러 없이 조용히</strong> 사라져서, 작업자 마킹을 고쳐도 화면에 아무
+            변화가 없습니다. 절차를 다 했는데 작업자 마커가 안 보이면 여기부터
+            확인하세요.
+          </p>
+        </div>
+
+        <h3>자율 매핑에는 전역 경로 계획이 없습니다</h3>
+        <p>
+          막다른 골목 탈출이 느리고, 탐색 반경(2.5m) 밖의 미탐사 구역은 스스로 찾아가지
+          못합니다. 넓은 공장을 빠짐없이 훑어야 한다면 explore_lite + Nav2로 넘어가야
+          합니다 — <code>ROS2_자율주행_및_연동(이다은)/README.md</code> 6장 참고.
+        </p>
+
+        <h3>실제 렌즈의 왜곡 보정 품질은 실물 촬영본으로만 확인됩니다</h3>
+        <p>
+          합성 데이터로 검증한 것은 CLI가 돌고 f/B/주점을 1% 내로 복원한다는
+          것까지입니다. 젯슨에서 <code>verify</code>를 꼭 돌려 보세요.
+        </p>
+
+        <h3>Cartographer 예방 설정은 꺼 둔 채입니다</h3>
+        <p>
+          <code>miss_probability</code>를 낮추면 "비어 있다"는 관측이 셀을 더 빨리
+          되돌리지만, 실물 로봇에서 검증하지 않은 SLAM 튜닝이라 기본값을 그대로 뒀습니다.
+          켠 뒤에는 얇은 벽이 끊기지 않는지 확인해야 합니다
+          (<code>config/real_turtlebot3_lds_2d.lua</code> 아래쪽 주석).
+        </p>
+
+        <h3><code>stall_monitor</code>의 <code>front_offset_m</code>은 현장에서 맞춰야 합니다</h3>
+        <p>
+          기본 0.20m입니다. 미니맵의 X 표시가 실제 문턱 위치와 어긋나면 이 값을
+          조정하세요.
+        </p>
+
+        <h3>TTS 음성 라이선스가 비상업적입니다</h3>
+        <p>
+          Piper 공식 저장소에 있는 한국어 음성이 <code>ko_KR-kss-medium</code>
+          하나뿐이라 선택지가 없었습니다(CC BY-NC-SA 4.0). 경진대회·연구·시연은 출처를
+          밝히면 되지만, <strong>사업화 계획이 있으면 다른 음성을 구하거나 직접
+          학습해야 합니다.</strong> 미리 알고 계셔야 할 제약입니다.
+        </p>
+
+        <h3>영상 속도는 아직 실측 전입니다</h3>
+        <p>
+          코드에서 원인 네 겹을 찾아 셋(①②③)은 고쳤고 CPU 경합도 줄였지만,
+          ④(rectification 비용)는 젯슨에서 <code>/health</code>의
+          <code>rectify_ms</code>를 봐야 판단할 수 있습니다. <strong>08-28 작업이
+          영상을 더 느리게 만들었을 가능성이 있고</strong>, 그렇다면 해상도를
+          낮추거나 정렬을 스트림 경로에서 빼는 선택지가 있습니다.
+        </p>
+
+        <h3>최적화 효과도 실측 전입니다</h3>
+        <p>
+          절감량은 개발 PC 벤치마크와 코드 분석에 근거한 값이고, 젯슨 실측은
+          <code>/health</code>의 <code>stereo_ms</code> · <code>stereo_skipped</code>로
+          확인해야 합니다. <strong>거리값이 바뀌지 않는다는 것만 300건 랜덤
+          검증</strong>으로 확인했습니다.
+        </p>
+
+        <h3>SGBM 다운스케일은 넣지 않았습니다</h3>
+        <p>
+          4배 빨라지고 수학적으로도 성립하지만(f와 시차가 같이 줄어 거리는 불변)
+          정밀도가 떨어집니다. 실측 검증 없이 넣을 변경이 아니라고 판단했습니다.
+          위 실측 후에도 부족하면 그때 검토하세요.
+        </p>
+
+        <h3>TTS 수신기에 상태 확인 수단이 없습니다</h3>
+        <p>
+          지금은 "젯슨으로 보냈습니다"까지만 알 수 있고, 스피커에서 실제로 울렸는지는
+          젯슨 로그를 봐야 합니다. 시연 중 "소리가 안 나는데 어디가 문제지"를 가르려면
+          <code>/health</code> 같은 엔드포인트가 필요합니다 — 아직 없습니다.
+        </p>
+
+        <h3>TTS 작업분(③)은 아직 커밋 전입니다</h3>
+        <p>①②는 커밋됐지만 <strong>셋 다 기기에는 미반영</strong>입니다.</p>
+      </section>
+
+      <p class="foot">
+        저장소 원본: <code>수정사항_배포안내_260828.md</code> ·
+        브랜치 <code>Automapping_3</code> · 이 페이지는 읽기용 사본입니다.
+        내용이 갈라지면 저장소 파일이 기준입니다.
+      </p>
+
+    </main>
+  </div>
+</div>
+</body>
+</html>

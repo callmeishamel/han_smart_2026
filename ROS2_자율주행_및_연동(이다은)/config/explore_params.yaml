@@ -1,0 +1,31 @@
+explore_node:
+  ros__parameters:
+    robot_base_frame: "base_footprint"
+    costmap_topic: "map"
+    costmap_updates_topic: "map_updates"
+    visualize: true
+    planner_frequency: 0.33
+    progress_timeout: 30.0
+    potential_scale: 3.0
+    orientation_scale: 0.0
+    gain_scale: 1.0
+    transform_tolerance: 0.3
+    min_frontier_size: 0.25 # 작은 공간도 탐색하도록 설정
+
+explore_costmap:
+  explore_costmap:
+    ros__parameters:
+      global_frame: map
+      robot_base_frame: base_footprint
+      robot_radius: 0.105 # 터틀봇 크기에 맞춤
+      resolution: 0.05
+      track_unknown_space: true
+      plugins: ["static_layer", "inflation_layer"]
+      static_layer:
+        plugin: "nav2_costmap_2d::StaticLayer"
+        map_subscribe_transient_local: true
+      inflation_layer:
+        plugin: "nav2_costmap_2d::InflationLayer"
+        cost_scaling_factor: 3.0
+        inflation_radius: 0.2 # 좁은 공간도 통과할 수 있게 인플레이션 반경 축소
+      always_send_full_costmap: true

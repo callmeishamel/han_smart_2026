@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <model name="factory_map_twin">
+    <static>true</static>
+    <link name="walls">
+      <collision name="collision">
+        <geometry>
+          <mesh><uri>model://factory_map_twin/meshes/walls.obj</uri></mesh>
+        </geometry>
+      </collision>
+      <visual name="visual">
+        <geometry>
+          <mesh><uri>model://factory_map_twin/meshes/walls.obj</uri></mesh>
+        </geometry>
+        <material>
+          <ambient>0.58 0.62 0.67 1</ambient>
+          <diffuse>0.72 0.76 0.82 1</diffuse>
+          <specular>0.08 0.08 0.08 1</specular>
+        </material>
+      </visual>
+    </link>
+  </model>
+</sdf>

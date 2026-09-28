@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Smart Factory AI Monitoring System</title>
+    <!-- Outfit Font from Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&family=Noto+Sans+KR:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #08090c;
+            --panel-bg: rgba(20, 24, 33, 0.65);
+            --border-color: rgba(255, 255, 255, 0.08);
+            --text-primary: #e2e8f0;
+            --text-secondary: #94a3b8;
+            --accent-cyan: #00e5ff;
+            --accent-purple: #7000ff;
+            --danger-red: #ff3b30;
+            --warning-yellow: #ffcc00;
+            --success-green: #34c759;
+            --glow-cyan: rgba(0, 229, 255, 0.4);
+            --glow-red: rgba(255, 59, 48, 0.5);
+            --glow-yellow: rgba(255, 204, 0, 0.5);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Outfit', 'Noto Sans KR', sans-serif;
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 10% 20%, rgba(112, 0, 255, 0.08) 0px, transparent 50%),
+                radial-gradient(at 90% 80%, rgba(0, 229, 255, 0.05) 0px, transparent 50%);
+            background-attachment: fixed;
+            color: var(--text-primary);
+            overflow-x: hidden;
+            min-height: 100vh;
+        }
+
+        /* Container Layout */
+        .container {
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            padding: 20px;
+            gap: 20px;
+        }
+
+        /* Header Styling */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 24px;
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
+        }
+
+        header h1 {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 1.5px;
+            background: linear-gradient(135deg, #ffffff 30%, var(--accent-cyan));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        header h1::before {
+            content: '';
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: var(--accent-cyan);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-cyan);
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--success-green);
+            box-shadow: 0 0 8px var(--success-green);
+            animation: pulse 2s infinite;
+        }
+
+        /* Main Workspace Grid */
+        .main-grid {
+            display: grid;
+            grid-template-columns: 1fr 1.2fr;
+            flex-grow: 1;
+            gap: 20px;
+            min-height: 0; /* Important for grid content scrolling */
+        }
+
+        /* Panels Shared Styles */
+        .panel {
+            background: var(--panel-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            min-height: 0;
+        }
+
+        .panel-title {
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+            color: var(--text-primary);
+            border-left: 3px solid var(--accent-cyan);
+            padding-left: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        /* Left Side: Camera & Events */
+        .left-col {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            min-height: 0;
+        }
+
+        .camera-container {
+            flex: 1.1;
+            position: relative;
+            background: #000;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .camera-stream {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+
+        /* Retro HUD Overlay on Camera */
+        .hud-overlay {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            font-size: 11px;
+            font-family: monospace;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 4px 8px;
+            border-radius: 4px;
+            border: 1px solid rgba(0, 229, 255, 0.3);
+            color: var(--accent-cyan);
+            letter-spacing: 1px;
+            pointer-events: none;
+        }
+
+        /* Event Log Panel */
+        .event-log-container {
+            flex: 0.9;
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+        }
+
+        .event-list {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            padding-right: 5px;
+        }
+
+        /* Custom Scrollbar */
+        .event-list::-webkit-scrollbar {
+            width: 6px;
+        }
+        .event-list::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.02);
+            border-radius: 3px;
+        }
+        .event-list::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 3px;
+        }
+
+        .event-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .event-card:hover {
+            transform: translateX(4px);
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .event-card.fire {
+            border-left: 4px solid var(--danger-red);
+        }
+
+        .event-card.helmet {
+            border-left: 4px solid var(--warning-yellow);
+        }
+
+        .event-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .event-label {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .event-card.fire .event-label { color: var(--danger-red); }
+        .event-card.helmet .event-label { color: var(--warning-yellow); }
+
+        .event-coords {
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-family: monospace;
+        }
+
+        .event-time {
+            font-size: 12px;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.05);
+            padding: 3px 8px;
+            border-radius: 6px;
+        }
+
+        /* Right Side: Map Viewer */
+        .map-panel {
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .map-container {
+            flex-grow: 1;
+            position: relative;
+            background: #11141c;
+            border-radius: 12px;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        canvas#map-canvas {
+            display: block;
+            max-width: 100%;
+            max-height: 100%;
+        }
+
+        .telemetry-bar {
+            display: flex;
+            justify-content: space-around;
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid var(--border-color);
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 13px;
+        }
+
+        .telemetry-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .telemetry-val {
+            font-weight: 600;
+            font-family: monospace;
+            color: var(--accent-cyan);
+        }
+
+        .telemetry-lbl {
+            font-size: 11px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+        }
+
+        /* Keyframe Animations */
+        @keyframes pulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.7); }
+            70% { transform: scale(1.1); box-shadow: 0 0 0 10px rgba(52, 199, 89, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(52, 199, 89, 0); }
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1024px) {
+            .main-grid {
+                grid-template-columns: 1fr;
+                overflow-y: auto;
+            }
+            .container { height: auto; }
+            .event-log-container { height: 300px; }
+            .map-panel { height: 500px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>SMART FACTORY AI MONITORING SYSTEM</h1>
+            <div class="system-status">
+                <div class="status-badge">
+                    <span class="status-dot"></span>
+                    <span>SYSTEM ONLINE</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Workspace -->
+        <div class="main-grid">
+            <!-- Left: Live Feeds -->
+            <div class="left-col">
+                <!-- Camera Feed -->
+                <div class="panel camera-container">
+                    <div class="hud-overlay">LIVE // TURTLEBOT3_BURGER_RGBD</div>
+                    <img class="camera-stream" src="/video_feed" alt="Live RGBD Camera Stream">
+                </div>
+
+                <!-- Event Alert Log -->
+                <div class="panel event-log-container">
+                    <div class="panel-title">
+                        <span>REAL-TIME SAFETY EVENT ALERTS</span>
+                    </div>
+                    <div class="event-list" id="event-list">
+                        <!-- Events populated by JS -->
+                        <div style="text-align: center; color: var(--text-secondary); margin-top: 40px; font-size: 13px;" id="no-events-msg">
+                            대기 중... 활성 이벤트가 감지되지 않았습니다.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Map Tracker -->
+            <div class="panel map-panel">
+                <div class="panel-title">
+                    <span>FACTORY 2D LOCATOR MAP</span>
+                </div>
+                <div class="map-container">
+                    <canvas id="map-canvas"></canvas>
+                </div>
+                <!-- Telemetry Bar -->
+                <div class="telemetry-bar">
+                    <div class="telemetry-item">
+                        <span class="telemetry-val" id="telemetry-x">0.00 m</span>
+                        <span class="telemetry-lbl">Pose X</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="telemetry-val" id="telemetry-y">0.00 m</span>
+                        <span class="telemetry-lbl">Pose Y</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="telemetry-val" id="telemetry-yaw">0.00°</span>
+                        <span class="telemetry-lbl">Yaw Angle</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="telemetry-val" id="telemetry-count">0</span>
+                        <span class="telemetry-lbl">Events Count</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Frontend logic for SSE, Canvas drawing and HUD updates -->
+    <script>
+        // State
+        let robotPose = { x: 0.0, y: 0.0, yaw: 0.0 };
+        let detectedEvents = [];
+        let mapImage = new Image();
+        let mapMetadata = { resolution: 0.05, origin: [-6.0, -3.0, 0.0] };
+        let mapLoaded = false;
+
+        const canvas = document.getElementById('map-canvas');
+        const ctx = canvas.getContext('2d');
+
+        // Elements
+        const eventListEl = document.getElementById('event-list');
+        const noEventsMsg = document.getElementById('no-events-msg');
+        
+        // Load Map Image
+        mapImage.src = '/map_image';
+        mapImage.onload = () => {
+            mapLoaded = true;
+            resizeCanvas();
+            drawMap();
+        };
+
+        // Fetch Map Metadata
+        fetch('/map_info')
+            .then(res => res.json())
+            .then(data => {
+                mapMetadata = data;
+                drawMap();
+            });
+
+        // Resize Canvas to fit container while keeping ratio
+        window.addEventListener('resize', () => {
+            resizeCanvas();
+            drawMap();
+        });
+
+        function resizeCanvas() {
+            if (!mapLoaded) return;
+            const container = canvas.parentElement;
+            const containerWidth = container.clientWidth - 20;
+            const containerHeight = container.clientHeight - 20;
+            
+            const mapRatio = mapImage.width / mapImage.height;
+            const containerRatio = containerWidth / containerHeight;
+
+            if (containerRatio > mapRatio) {
+                canvas.height = containerHeight;
+                canvas.width = containerHeight * mapRatio;
+            } else {
+                canvas.width = containerWidth;
+                canvas.height = containerWidth / mapRatio;
+            }
+        }
+
+        // Coordinate transformation math
+        function mapToPixel(mx, my) {
+            if (!mapLoaded) return { x: 0, y: 0 };
+            
+            // mx_pixel = (mx - origin_x) / resolution
+            const px_x_raw = (mx - mapMetadata.origin[0]) / mapMetadata.resolution;
+            // my_pixel = height_px - (my - origin_y) / resolution
+            const px_y_raw = mapImage.height - (my - mapMetadata.origin[1]) / mapMetadata.resolution;
+
+            // Scale to fits current canvas sizes
+            const scaleX = canvas.width / mapImage.width;
+            const scaleY = canvas.height / mapImage.height;
+
+            return {
+                x: px_x_raw * scaleX,
+                y: px_y_raw * scaleY
+            };
+        }
+
+        // Drawing loops
+        function drawMap() {
+            if (!mapLoaded) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw map background image
+            ctx.drawImage(mapImage, 0, 0, canvas.width, canvas.height);
+
+            // Draw grid overlay for premium engineering look
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.lineWidth = 1;
+            const gridSize = 30;
+            for (let x = 0; x < canvas.width; x += gridSize) {
+                ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
+            }
+            for (let y = 0; y < canvas.height; y += gridSize) {
+                ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
+            }
+
+            // Draw Events
+            detectedEvents.forEach(evt => {
+                const pos = mapToPixel(evt.x, evt.y);
+                const isFire = evt.label.includes('fire');
+                const glowColor = isFire ? 'rgba(255, 59, 48, 0.6)' : 'rgba(255, 204, 0, 0.6)';
+                const solidColor = isFire ? '#ff3b30' : '#ffcc00';
+
+                // Pulsing animation ring
+                const pulseRadius = 12 + Math.sin(Date.now() / 150) * 4;
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, pulseRadius, 0, Math.PI * 2);
+                ctx.strokeStyle = glowColor;
+                ctx.lineWidth = 2;
+                ctx.stroke();
+
+                // Inner Solid dot
+                ctx.beginPath();
+                ctx.arc(pos.x, pos.y, 6, 0, Math.PI * 2);
+                ctx.fillStyle = solidColor;
+                ctx.shadowColor = solidColor;
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.shadowBlur = 0; // reset
+            });
+
+            // Draw Robot Pose (Triangle Pointer)
+            const robPos = mapToPixel(robotPose.x, robotPose.y);
+            const scale = canvas.width / mapImage.width;
+            const robSize = 10; // size of triangle
+
+            ctx.save();
+            ctx.translate(robPos.x, robPos.y);
+            // Rotate matching ROS coordinate system
+            // ROS yaw angle 0 is +X (pointing Right in 2D image)
+            // But standard 2D image coordinate system has Y down.
+            // So we need to rotate by -yaw because ROS y-axis points up and 2D canvas y-axis points down.
+            ctx.rotate(-robotPose.yaw);
+
+            // Draw glowing cyan circle behind robot
+            ctx.beginPath();
+            ctx.arc(0, 0, 14, 0, Math.PI * 2);
+            ctx.fillStyle = 'rgba(0, 229, 255, 0.15)';
+            ctx.fill();
+
+            // Draw direction arrow
+            ctx.beginPath();
+            ctx.moveTo(robSize * 1.5, 0); // nose pointing East
+            ctx.lineTo(-robSize, robSize);
+            ctx.lineTo(-robSize * 0.5, 0);
+            ctx.lineTo(-robSize, -robSize);
+            ctx.closePath();
+            
+            ctx.fillStyle = '#00e5ff';
+            ctx.shadowColor = '#00e5ff';
+            ctx.shadowBlur = 8;
+            ctx.fill();
+            ctx.restore();
+            ctx.shadowBlur = 0; // reset
+        }
+
+        // Animation Frame for continuous rendering of map & canvas elements (for pulse animation)
+        function animate() {
+            drawMap();
+            requestAnimationFrame(animate);
+        }
+        requestAnimationFrame(animate);
+
+        // SSE Connection
+        const sse = new EventSource('/events');
+
+        sse.onmessage = (event) => {
+            const data = JSON.parse(event.data);
+            
+            if (data.type === 'init' || data.type === 'update') {
+                // Update Robot Pose
+                robotPose = data.pose;
+                document.getElementById('telemetry-x').innerText = `${robotPose.x.toFixed(2)} m`;
+                document.getElementById('telemetry-y').innerText = `${robotPose.y.toFixed(2)} m`;
+                // Convert radians to degrees
+                const deg = (robotPose.yaw * 180 / Math.PI).toFixed(0);
+                document.getElementById('telemetry-yaw').innerText = `${deg}°`;
+
+                // Update Events List
+                if (data.events && data.events.length > 0) {
+                    detectedEvents = data.events;
+                    document.getElementById('telemetry-count').innerText = detectedEvents.length;
+                    
+                    if (noEventsMsg) noEventsMsg.style.display = 'none';
+                    updateEventListUI();
+                }
+            }
+        };
+
+        function updateEventListUI() {
+            // Re-render list but preserve order (latest on top)
+            const sortedEvents = [...detectedEvents].sort((a, b) => b.timestamp - a.timestamp);
+            
+            eventListEl.innerHTML = '';
+            
+            sortedEvents.forEach(evt => {
+                const isFire = evt.label.includes('fire');
+                const cardClass = isFire ? 'event-card fire' : 'event-card helmet';
+                
+                const card = document.createElement('div');
+                card.className = cardClass;
+                card.innerHTML = `
+                    <div class="event-info">
+                        <span class="event-label">${evt.label === 'fire' ? '🔥 화재 감지 (FIRE)' : '⚠️ 안전모 미착용 (HELMET VIOLATION)'}</span>
+                        <span class="event-coords">위치: [X: ${evt.x.toFixed(2)}m, Y: ${evt.y.toFixed(2)}m]</span>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span class="event-time">${evt.time}</span>
+                    </div>
+                `;
+                eventListEl.appendChild(card);
+            });
+        }
+    </script>
+</body>
+</html>

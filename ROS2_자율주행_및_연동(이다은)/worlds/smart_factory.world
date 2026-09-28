@@ -1,0 +1,221 @@
+<?xml version="1.0" ?>
+<sdf version="1.6">
+  <world name="smart_factory_world">
+    <!-- Gazebo 모델 좌표를 ROS2 /gazebo/model_states 로 발행한다.
+         event_detector.py의 mock 화재/안전모 위반 판정이 이 토픽을 사용한다. -->
+    <plugin name="gazebo_ros_state" filename="libgazebo_ros_state.so">
+      <ros><namespace>/gazebo</namespace></ros>
+      <update_rate>10.0</update_rate>
+    </plugin>
+    <physics name="default_physics" default="true" type="ode">
+      <max_step_size>0.001</max_step_size>
+      <real_time_factor>1.0</real_time_factor>
+      <real_time_update_rate>1000</real_time_update_rate>
+    </physics>
+
+    <!-- Sun -->
+    <include>
+      <uri>model://sun</uri>
+    </include>
+
+    <!-- Ground Plane -->
+    <include>
+      <uri>model://ground_plane</uri>
+    </include>
+
+    <!-- ============================================== -->
+    <!-- Factory Walls (Outer boundary 20x20)           -->
+    <!-- ============================================== -->
+    <model name="wall_north">
+      <static>true</static>
+      <link name="link">
+        <pose>0 10 1 0 0 0</pose>
+        <collision name="collision"><geometry><box><size>20 0.2 2</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>20 0.2 2</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="wall_south">
+      <static>true</static>
+      <link name="link">
+        <pose>0 -10 1 0 0 0</pose>
+        <collision name="collision"><geometry><box><size>20 0.2 2</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>20 0.2 2</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="wall_east">
+      <static>true</static>
+      <link name="link">
+        <pose>10 0 1 0 0 1.5708</pose>
+        <collision name="collision"><geometry><box><size>20 0.2 2</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>20 0.2 2</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="wall_west">
+      <static>true</static>
+      <link name="link">
+        <pose>-10 0 1 0 0 1.5708</pose>
+        <collision name="collision"><geometry><box><size>20 0.2 2</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>20 0.2 2</size></box></geometry>
+          <material><ambient>0.8 0.8 0.8 1</ambient><diffuse>0.8 0.8 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- ============================================== -->
+    <!-- Scattered Obstacles (Boxes, Cylinders, Pillars)-->
+    <!-- Robot starts at (0, 0, 0), so keep center clear-->
+    <!-- ============================================== -->
+
+    <!-- Quadrant 1 (Top Right: x>0, y>0) -->
+    <model name="obstacle_box_1">
+      <static>true</static><pose>3 3 0.5 0 0 0.2</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1.5 1.5 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1.5 1.5 1</size></box></geometry>
+          <material><ambient>0.5 0.3 0.1 1</ambient><diffuse>0.5 0.3 0.1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="obstacle_cyl_1">
+      <static>true</static><pose>7 5 1 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>1.0</radius><length>2.0</length></cylinder></geometry></collision>
+        <visual name="visual"><geometry><cylinder><radius>1.0</radius><length>2.0</length></cylinder></geometry>
+          <material><ambient>0.7 0.7 0.7 1</ambient><diffuse>0.7 0.7 0.7 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="obstacle_pillar_1">
+      <static>true</static><pose>5 8 1 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.8 0.8 2</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.8 0.8 2</size></box></geometry>
+          <material><ambient>0.3 0.3 0.4 1</ambient><diffuse>0.3 0.3 0.4 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Quadrant 2 (Top Left: x<0, y>0) -->
+    <model name="obstacle_box_2">
+      <static>true</static><pose>-4 6 0.5 0 0 -0.5</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>2 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>2 1 1</size></box></geometry>
+          <material><ambient>0.5 0.3 0.1 1</ambient><diffuse>0.5 0.3 0.1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="obstacle_cyl_2">
+      <static>true</static><pose>-7 3 1.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>0.8</radius><length>3.0</length></cylinder></geometry></collision>
+        <visual name="visual"><geometry><cylinder><radius>0.8</radius><length>3.0</length></cylinder></geometry>
+          <material><ambient>0.2 0.8 0.2 1</ambient><diffuse>0.2 0.8 0.2 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+    
+    <model name="obstacle_box_3">
+      <static>true</static><pose>-8 8 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1.2 1.2 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1.2 1.2 1</size></box></geometry>
+          <material><ambient>0.5 0.3 0.1 1</ambient><diffuse>0.5 0.3 0.1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Quadrant 3 (Bottom Left: x<0, y<0) -->
+    <model name="obstacle_wall_segment">
+      <static>true</static><pose>-5 -5 1 0 0 0.785</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>4 0.2 2</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>4 0.2 2</size></box></geometry>
+          <material><ambient>0.8 0.4 0.1 1</ambient><diffuse>0.8 0.4 0.1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="obstacle_cyl_3">
+      <static>true</static><pose>-2 -7 1 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><cylinder><radius>1.2</radius><length>2.0</length></cylinder></geometry></collision>
+        <visual name="visual"><geometry><cylinder><radius>1.2</radius><length>2.0</length></cylinder></geometry>
+          <material><ambient>0.1 0.1 0.8 1</ambient><diffuse>0.1 0.1 0.8 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <!-- Quadrant 4 (Bottom Right: x>0, y<0) -->
+    <model name="obstacle_box_4">
+      <static>true</static><pose>6 -3 0.5 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>2 2 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>2 2 1</size></box></geometry>
+          <material><ambient>0.5 0.3 0.1 1</ambient><diffuse>0.5 0.3 0.1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="obstacle_box_5">
+      <static>true</static><pose>4 -6 0.5 0 0 1.0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>1.5 1 1</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>1.5 1 1</size></box></geometry>
+          <material><ambient>0.5 0.3 0.1 1</ambient><diffuse>0.5 0.3 0.1 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+    <model name="obstacle_pillar_2">
+      <static>true</static><pose>8 -8 1 0 0 0</pose>
+      <link name="link">
+        <collision name="collision"><geometry><box><size>0.5 0.5 2</size></box></geometry></collision>
+        <visual name="visual"><geometry><box><size>0.5 0.5 2</size></box></geometry>
+          <material><ambient>0.3 0.3 0.4 1</ambient><diffuse>0.3 0.3 0.4 1</diffuse></material>
+        </visual>
+      </link>
+    </model>
+
+
+    <!-- ============================================== -->
+    <!-- Custom Events                                  -->
+    <!-- ============================================== -->
+    <!-- Custom Event Target: Fire Event -->
+    <model name="fire_event_target">
+      <pose>8.0 3.0 0.5 0 0 0</pose>
+      <static>true</static>
+      <include>
+        <uri>model://fire_event</uri>
+      </include>
+    </model>
+
+    <!-- Custom Event Target: Helmet Violation Event -->
+    <model name="helmet_violation_event_target">
+      <pose>-8.0 -3.0 0.0 0 0 0</pose>
+      <static>true</static>
+      <include>
+        <uri>model://helmet_violation_event</uri>
+      </include>
+    </model>
+
+    <!-- Scene lighting / shadows settings -->
+    <scene>
+      <ambient>0.4 0.4 0.4 1.0</ambient>
+      <background>0.7 0.7 0.7 1.0</background>
+      <shadows>true</shadows>
+    </scene>
+  </world>
+</sdf>

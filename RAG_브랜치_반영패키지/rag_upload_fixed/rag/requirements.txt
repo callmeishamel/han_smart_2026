@@ -1,0 +1,29 @@
+# RAG 대응안 생성 파트 의존성 (파이프라인을 실행하는 PC, Linux)
+#
+# 설치:
+#   pip3 install -r rag/requirements.txt
+#
+# 필수는 psycopg2-binary 하나뿐이고 나머지는 선택입니다.
+# 선택 항목이 없어도 대응안은 생성됩니다(3단계 폴백).
+
+# --- 필수 ---
+psycopg2-binary>=2.9.9        # DB 연결. 프로젝트 전체가 이미 사용 중
+
+# --- 선택: 벡터 유사도 검색 ---
+# 아래 pgvector 는 파이썬 클라이언트 패키지입니다.
+# PostgreSQL 서버 측 vector 확장과는 별개이며, 이것만 설치해서는
+# 벡터 검색이 켜지지 않습니다. 서버 확장은 DB 가 떠 있는 PC 에서
+# 별도로 설치해야 합니다(docs/설치가이드_리눅스.md 1절).
+# 확장이 없으면 위험유형 기준 조회로 동작합니다.
+pgvector>=0.2.5
+sentence-transformers>=2.7.0  # BGE-M3 임베딩. 최초 실행 시 모델 약 2GB 다운로드
+
+# --- 선택: LLM 문장 생성 ---
+# 서버(vLLM 또는 Ollama)가 없으면 규칙 기반 문장으로 대체됩니다.
+requests>=2.31.0
+
+# --- 참고 ---
+# vLLM 은 여기에 넣지 않았습니다. NVIDIA CUDA 환경에서만 설치되고,
+# 없는 환경에서 requirements 전체 설치가 실패하기 때문입니다.
+# 필요하면 별도로 설치하십시오.
+#   pip3 install vllm

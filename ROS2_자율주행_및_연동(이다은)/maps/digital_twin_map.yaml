@@ -1,0 +1,7 @@
+image: digital_twin_map.pgm
+mode: trinary
+resolution: 0.05
+origin: [-1.7000, -1.2000, 0.0]
+negate: 0
+occupied_thresh: 0.65
+free_thresh: 0.196

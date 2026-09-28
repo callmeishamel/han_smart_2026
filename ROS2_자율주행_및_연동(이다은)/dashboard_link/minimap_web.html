@@ -1,0 +1,1795 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<!--
+  CSP — 외부 리소스를 일절 받지 않습니다(폐쇄망 전제).
+  script-src 에 'unsafe-inline' 이 들어간 이유: 이 파일이 스크립트를 인라인으로
+  들고 있는 단일 파일이기 때문입니다. 더 강하게 죄려면 아래 <script> 블록을
+  minimap_web.js 로 떼어내고 script-src 를 'self' 만 남기면 됩니다.
+  (default-src 'self' 만 두고 script-src 를 생략하면 인라인 스크립트가 차단되어
+   페이지가 동작하지 않습니다.)
+-->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  img-src 'self' data:;
+  style-src 'self' 'unsafe-inline';
+  script-src 'self' 'unsafe-inline';
+  connect-src 'self';
+  font-src 'self';
+  object-src 'none';
+  base-uri 'none';
+  form-action 'none'">
+<!--
+  frame-ancestors 는 여기(<meta>)에 쓰면 사양상 무시되므로 넣지 않습니다.
+  누가 이 페이지를 iframe 으로 감쌀 수 있는지는 서버가 HTTP 헤더로 지정합니다.
+  minimap_renderer.py 의 MINIMAP_FRAME_ANCESTORS 참고.
+-->
+
+<title>스마트팩토리 순찰 미니맵</title>
+
+<style>
+/* ============================================================
+   토큰 — 밝은 테마가 기본값, 다크는 토큰만 재정의
+   글꼴은 전부 시스템 내장 스택(외부 CDN 없음).
+   IBM Plex 를 쓰고 싶다면 폰트 파일을 이 폴더에 내려받아
+   @font-face 로 self-host 하고 --f-sans / --f-mono 앞에 끼워넣으세요.
+   ============================================================ */
+:root{
+  --ground:#EDEAE3;
+  --chassis:#F6F4EF;
+  --panel:#FFFFFF;
+  --panel-2:#F1EEE8;
+  --line:#D5D0C6;
+  --line-soft:#E5E1D9;
+  --ink:#1B2430;
+  --ink-2:#4C5A69;
+  --ink-3:#7E8B9A;
+
+  --map-free:#FFFDF7;
+  --map-wall:#1E1712;
+  --map-unknown:#D9D4C9;
+  --map-edge:#B9B2A4;
+
+  --robot:#C21F72;
+  --robot-cone:rgba(194,31,114,.13);
+
+  --fire:#D23A12;
+  --helmet:#A96C00;
+  --person:#1E6FD9;
+  --vehicle:#6B4EA8;
+  --other:#6A7788;
+  --blind:#B4530F;
+
+  --ok:#1C7A4C;
+  --warn:#A96C00;
+  --bad:#C0392B;
+  --dead:#8A97A6;
+
+  --scrim:rgba(237,234,227,.72);
+
+  --shadow:0 1px 2px rgba(20,28,38,.08), 0 8px 24px rgba(20,28,38,.06);
+  --r-sm:6px;
+
+  --f-sans:system-ui, -apple-system, "Segoe UI", "Malgun Gothic",
+           "Apple SD Gothic Neo", "Noto Sans KR", sans-serif;
+  --f-mono:ui-monospace, SFMono-Regular, "Cascadia Mono", Consolas,
+           "D2Coding", "Noto Sans Mono", monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ground:#0D141C;
+    --chassis:#111B25;
+    --panel:#16212E;
+    --panel-2:#1B2836;
+    --line:#27343F;
+    --line-soft:#1C2733;
+    --ink:#E7EDF4;
+    --ink-2:#9EB1C3;
+    --ink-3:#647889;
+
+    --map-free:#E4DFD2;
+    --map-wall:#0B0906;
+    --map-unknown:#233040;
+    --map-edge:#38485A;
+
+    --robot:#FF4D9D;
+    --robot-cone:rgba(255,77,157,.14);
+
+    --fire:#FF5A36;
+    --helmet:#FFB020;
+    --person:#4DA3FF;
+  --vehicle:#A98BE0;
+    --vehicle:#A98BE0;
+    --other:#8296A9;
+    --blind:#E8934A;
+
+    --ok:#3FCF8E;
+    --warn:#FFB020;
+    --bad:#FF6B5A;
+    --dead:#55697B;
+
+    --scrim:rgba(13,20,28,.74);
+
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.30);
+  }
+}
+:root[data-theme="dark"]{
+  --ground:#0D141C;
+  --chassis:#111B25;
+  --panel:#16212E;
+  --panel-2:#1B2836;
+  --line:#27343F;
+  --line-soft:#1C2733;
+  --ink:#E7EDF4;
+  --ink-2:#9EB1C3;
+  --ink-3:#647889;
+
+  --map-free:#E4DFD2;
+  --map-wall:#0B0906;
+  --map-unknown:#233040;
+  --map-edge:#38485A;
+
+  --robot:#FF4D9D;
+  --robot-cone:rgba(255,77,157,.14);
+
+  --fire:#FF5A36;
+  --helmet:#FFB020;
+  --person:#4DA3FF;
+  --other:#8296A9;
+    --blind:#E8934A;
+
+  --ok:#3FCF8E;
+  --warn:#FFB020;
+  --bad:#FF6B5A;
+  --dead:#55697B;
+
+  --scrim:rgba(13,20,28,.74);
+
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 10px 30px rgba(0,0,0,.30);
+}
+
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;
+  background:var(--ground);
+  color:var(--ink);
+  font-family:var(--f-sans);
+  font-size:14px;
+  line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+button{font:inherit; color:inherit}
+:focus-visible{outline:2px solid var(--robot); outline-offset:2px; border-radius:4px}
+
+.chassis{height:100%; min-height:100vh; display:flex; flex-direction:column; background:var(--chassis)}
+
+/* --- 상단 상태 레일 --- */
+.rail{
+  display:flex; align-items:center; gap:20px;
+  padding:10px 16px;
+  background:var(--panel);
+  border-bottom:1px solid var(--line);
+  flex-wrap:wrap;
+}
+.brand{display:flex; align-items:baseline; gap:9px}
+.brand b{font-weight:700; font-size:15px; letter-spacing:-.01em}
+.brand span{
+  font-family:var(--f-mono); font-size:10px; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3);
+}
+.pills{display:flex; gap:7px; flex-wrap:wrap}
+.pill{
+  display:inline-flex; align-items:center; gap:6px;
+  padding:4px 9px 4px 7px;
+  background:var(--panel-2);
+  border:1px solid var(--line-soft);
+  border-radius:100px;
+  font-family:var(--f-mono); font-size:11px; font-weight:500;
+  color:var(--ink-2); white-space:nowrap;
+}
+.dot{width:7px; height:7px; border-radius:50%; background:var(--dead); flex:none}
+.pill[data-s="ok"]{color:var(--ink)}   .pill[data-s="ok"]   .dot{background:var(--ok)}
+.pill[data-s="warn"]{color:var(--ink)} .pill[data-s="warn"] .dot{background:var(--warn)}
+.pill[data-s="bad"]{color:var(--ink)}  .pill[data-s="bad"]  .dot{background:var(--bad)}
+@media (prefers-reduced-motion: no-preference){
+  .pill[data-s="ok"] .dot{animation:beat 2.4s ease-in-out infinite}
+  .pill[data-s="bad"] .dot{animation:beat .9s steps(2,end) infinite}
+}
+@keyframes beat{0%,100%{opacity:1} 50%{opacity:.4}}
+
+.readout{
+  margin-left:auto; display:flex; gap:16px; align-items:center;
+  font-family:var(--f-mono); font-size:11.5px;
+  font-variant-numeric:tabular-nums; color:var(--ink-2);
+}
+.readout div{display:flex; gap:6px; align-items:baseline}
+.readout dfn{
+  font-style:normal; font-size:9.5px; letter-spacing:.13em;
+  text-transform:uppercase; color:var(--ink-3);
+}
+.readout b{font-weight:600; color:var(--ink)}
+#r-nav[data-s="run"]{color:var(--warn)}
+#r-nav[data-s="ok"]{color:var(--ok)}
+#r-nav[data-s="bad"]{color:var(--bad)}
+
+/* --- 무대 --- */
+.stage{flex:1; display:grid; grid-template-columns:1fr 260px; min-height:0}
+
+.viewport{position:relative; background:var(--ground); overflow:hidden; min-height:340px}
+#map{display:block; width:100%; height:100%; cursor:grab; touch-action:none}
+#map.drag{cursor:grabbing}
+
+/* 데모 모드 — 실제 관제 화면과 절대 헷갈리지 않도록 전면 해저드 스트라이프 */
+.viewport.demo::before{
+  content:""; position:absolute; inset:0; z-index:3; pointer-events:none;
+  background:repeating-linear-gradient(45deg,
+    rgba(169,108,0,.13) 0 14px, rgba(169,108,0,0) 14px 42px);
+}
+.viewport.demo::after{
+  content:"데모 데이터 · 실제 현장 정보 아님";
+  position:absolute; z-index:4; left:50%; top:50%;
+  transform:translate(-50%,-50%) rotate(-24deg);
+  font-family:var(--f-mono); font-size:clamp(15px,3.4vw,34px); font-weight:600;
+  letter-spacing:.08em; color:var(--warn); opacity:.3;
+  white-space:nowrap; pointer-events:none;
+}
+
+/* 통신 두절 — 캔버스를 덮어 낡은 값을 실시간처럼 읽지 않게 */
+.stale{
+  position:absolute; inset:0; z-index:5;
+  display:none; place-items:center;
+  background:var(--scrim); backdrop-filter:blur(1.5px);
+  text-align:center; padding:20px;
+}
+.viewport.is-stale .stale{display:grid}
+.stale b{display:block; font-size:15px; font-weight:600; color:var(--bad); margin-bottom:5px}
+.stale span{font-size:12.5px; color:var(--ink-2); font-family:var(--f-mono)}
+
+.tools{position:absolute; top:12px; left:12px; z-index:6; display:flex; flex-direction:column; gap:6px}
+.tgroup{
+  display:flex; flex-direction:column;
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:var(--r-sm); overflow:hidden; box-shadow:var(--shadow);
+}
+.tool{
+  width:32px; height:30px; display:grid; place-items:center;
+  background:none; border:0; cursor:pointer; color:var(--ink-2);
+  font-family:var(--f-mono); font-size:13px; font-weight:500;
+}
+.tool + .tool{border-top:1px solid var(--line-soft)}
+.tool:hover{background:var(--panel-2); color:var(--ink)}
+.tool[aria-pressed="true"]{background:var(--robot); color:#fff}
+.tool svg{width:15px; height:15px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round}
+
+.layers{
+  position:absolute; top:12px; right:12px; z-index:6;
+  background:var(--panel); border:1px solid var(--line);
+  border-radius:var(--r-sm); padding:8px 10px; box-shadow:var(--shadow);
+  display:flex; flex-direction:column; gap:2px;
+}
+.layers h4, .legend h4{
+  margin:0 0 4px;
+  font-family:var(--f-mono); font-size:9.5px; font-weight:500;
+  letter-spacing:.14em; text-transform:uppercase; color:var(--ink-3);
+}
+.layers label{display:flex; align-items:center; gap:7px; font-size:12px; color:var(--ink-2); cursor:pointer; padding:2px 0}
+.layers label:hover{color:var(--ink)}
+.layers input{accent-color:var(--robot); width:13px; height:13px; margin:0}
+
+.scalebar{
+  position:absolute; left:12px; bottom:12px; z-index:6;
+  display:flex; align-items:center; gap:8px;
+  padding:5px 9px; background:var(--panel); border:1px solid var(--line);
+  border-radius:var(--r-sm); box-shadow:var(--shadow);
+  font-family:var(--f-mono); font-size:11px; font-weight:500;
+  color:var(--ink-2); font-variant-numeric:tabular-nums;
+}
+.scalebar i{display:block; height:6px; border:1px solid var(--ink-2); border-top:0; transition:width .12s ease-out}
+.cursor{
+  position:absolute; right:12px; bottom:12px; z-index:6;
+  padding:5px 9px; background:var(--panel); border:1px solid var(--line);
+  border-radius:var(--r-sm); box-shadow:var(--shadow);
+  font-family:var(--f-mono); font-size:11px; color:var(--ink-2);
+  font-variant-numeric:tabular-nums; pointer-events:none;
+  opacity:0; transition:opacity .12s;
+}
+.cursor.on{opacity:1}
+
+.patrol-bar{
+  position:absolute; left:14px; bottom:14px; z-index:6;
+  display:flex; align-items:center; gap:8px;
+  padding:8px 10px; border-radius:10px;
+  background:var(--scrim); backdrop-filter:blur(6px);
+  border:1px solid var(--line);
+}
+.patrol-bar button{
+  font:inherit; font-size:13px; font-weight:600;
+  padding:7px 13px; border-radius:7px; cursor:pointer;
+  border:1px solid var(--line); background:var(--panel); color:var(--ink);
+}
+.patrol-bar button:hover:not(:disabled){ border-color:var(--robot); }
+.patrol-bar button:disabled{ opacity:.5; cursor:progress; }
+.patrol-bar #patrol-start{ border-color:var(--ok); color:var(--ok); }
+.patrol-bar #patrol-stop{ border-color:var(--bad); color:var(--bad); }
+.patrol-hint{ font-size:12px; color:var(--ink-3); white-space:nowrap; }
+
+.resume-btn{
+  position:absolute; left:12px; top:12px; z-index:6;
+  font:inherit; font-size:12px; padding:5px 11px; cursor:pointer;
+  background:var(--panel); color:var(--ink);
+  border:1px solid var(--robot); border-radius:var(--r-sm); box-shadow:var(--shadow);
+}
+
+.goto-ask{
+  position:absolute; left:50%; top:50%; z-index:9; transform:translate(-50%,-50%);
+  min-width:250px; padding:14px 16px;
+  background:var(--panel); border:1px solid var(--line);
+  border-left:3px solid var(--robot);
+  border-radius:var(--r-sm); box-shadow:var(--shadow); font-size:12.5px;
+}
+.goto-ask h4{margin:0 0 6px; font-size:13px; color:var(--ink)}
+.goto-ask p{margin:0 0 10px; color:var(--ink-2); line-height:1.55}
+.goto-ask code{font-family:var(--f-mono); color:var(--ink)}
+.goto-ask label{display:flex; gap:6px; align-items:center; margin:0 0 10px; color:var(--ink-2)}
+.goto-ask .row{display:flex; gap:8px; justify-content:flex-end}
+.goto-ask button{
+  font:inherit; padding:5px 12px; border-radius:var(--r-sm); cursor:pointer;
+  border:1px solid var(--line); background:var(--panel-2); color:var(--ink);
+}
+.goto-ask button.go{border-color:var(--robot); background:var(--robot); color:#fff}
+.goto-ask button:disabled{opacity:.55; cursor:default}
+
+.notice{
+  position:absolute; left:50%; top:12px; z-index:6; transform:translateX(-50%);
+  display:flex; align-items:center; gap:8px;
+  padding:6px 13px; background:var(--panel);
+  border:1px solid var(--line); border-left:3px solid var(--warn);
+  border-radius:var(--r-sm); box-shadow:var(--shadow);
+  font-size:12px; color:var(--ink-2); max-width:calc(100% - 220px);
+}
+.notice b{color:var(--ink); font-weight:600}
+.notice[hidden]{display:none}
+
+/* --- 우측 패널 --- */
+.side{background:var(--panel); border-left:1px solid var(--line); display:flex; flex-direction:column; min-height:0}
+.side > header{
+  padding:12px 14px 10px; border-bottom:1px solid var(--line-soft);
+  display:flex; align-items:baseline; justify-content:space-between; gap:8px;
+}
+.side > header h2{margin:0; font-size:13px; font-weight:600; letter-spacing:-.01em}
+.count{font-family:var(--f-mono); font-size:11px; font-weight:600; color:var(--ink-3); font-variant-numeric:tabular-nums}
+
+.list{flex:1; overflow-y:auto; overflow-x:hidden; padding:8px; display:flex; flex-direction:column; gap:6px}
+.card{
+  position:relative; width:100%; text-align:left;
+  background:var(--panel-2); border:1px solid var(--line-soft);
+  border-radius:var(--r-sm); padding:9px 11px 9px 14px;
+  cursor:pointer; display:grid; gap:5px;
+  transition:border-color .12s, transform .12s;
+}
+.card::before{
+  content:""; position:absolute; left:0; top:0; bottom:0; width:3px;
+  border-radius:var(--r-sm) 0 0 var(--r-sm); background:var(--sev);
+}
+.card:hover{border-color:var(--map-edge)}
+.card[aria-current="true"]{border-color:var(--sev); transform:translateX(1px)}
+.card .top{display:flex; align-items:center; justify-content:space-between; gap:8px}
+.card .name{font-size:13px; font-weight:600; color:var(--ink)}
+.card .id{font-family:var(--f-mono); font-size:10px; font-weight:500; color:var(--ink-3)}
+.card .meta{
+  display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+  font-family:var(--f-mono); font-size:10.5px; color:var(--ink-2);
+  font-variant-numeric:tabular-nums;
+}
+.card .meta em{font-style:normal; color:var(--ink-3)}
+.card .ago{margin-left:auto}
+.bars{display:flex; gap:2px; align-items:center}
+.bars s{display:block; width:3px; height:8px; border-radius:1px; background:var(--line); text-decoration:none}
+.bars s.on{background:var(--sev)}
+
+.empty{margin:auto; padding:28px 18px; text-align:center; color:var(--ink-3); font-size:12.5px; line-height:1.6}
+
+.legend{border-top:1px solid var(--line-soft); padding:11px 14px 13px; display:flex; flex-direction:column; gap:7px}
+.legend div{display:flex; align-items:center; gap:8px; font-size:11.5px; color:var(--ink-2)}
+.chip{width:9px; height:9px; border-radius:50%; flex:none}
+.chip.sq{border-radius:2px}
+
+.hint{
+  padding:7px 16px; background:var(--panel); border-top:1px solid var(--line);
+  display:flex; gap:16px; flex-wrap:wrap; font-size:11px; color:var(--ink-3);
+}
+.hint kbd{
+  font-family:var(--f-mono); font-size:10px; font-weight:500;
+  background:var(--panel-2); border:1px solid var(--line-soft);
+  border-radius:3px; padding:1px 4px; color:var(--ink-2);
+}
+
+/* 대시보드가 지도 옆에 AI 대응안을 두면서 지도 칸이 좁아졌습니다.
+   1366px 노트북에서 지도 칸은 약 870px 이므로, 접힘 기준을 760px 으로
+   낮춰 그 폭에서는 지도+탐지목록 2단을 유지합니다. */
+@media (max-width:760px){
+  .stage{grid-template-columns:1fr; grid-template-rows:minmax(300px,1fr) auto}
+  .side{border-left:0; border-top:1px solid var(--line); max-height:44vh}
+  .readout{margin-left:0; width:100%; order:3}
+  .notice{max-width:calc(100% - 24px)}
+  .layers{top:auto; bottom:52px; right:12px}
+}
+</style>
+</head>
+<body>
+
+<div class="chassis">
+
+  <header class="rail">
+    <div class="brand">
+      <b>순찰 미니맵</b>
+      <span>SLAM · MAP FRAME</span>
+    </div>
+
+    <div class="pills">
+      <span class="pill" id="p-map"  data-s="off"><i class="dot"></i><span>지도 대기</span></span>
+      <span class="pill" id="p-pose" data-s="off"><i class="dot"></i><span>위치 대기</span></span>
+      <span class="pill" id="p-det"  data-s="off"><i class="dot"></i><span>탐지 없음</span></span>
+    </div>
+
+    <div class="readout">
+      <div><dfn>X</dfn><b id="r-x">—</b></div>
+      <div><dfn>Y</dfn><b id="r-y">—</b></div>
+      <div><dfn>방위</dfn><b id="r-yaw">—</b></div>
+      <div><dfn>갱신</dfn><b id="r-age">—</b></div>
+      <div><dfn>배터리</dfn><b id="r-bat">—</b></div>
+      <div><dfn>순찰</dfn><b id="r-patrol">—</b></div>
+      <div><dfn>이동</dfn><b id="r-nav">—</b></div>
+    </div>
+  </header>
+
+  <div class="stage">
+    <div class="viewport" id="viewport">
+      <canvas id="map"></canvas>
+
+      <div class="stale">
+        <div>
+          <b>서버 응답 없음</b>
+          <span id="stale-t">마지막 수신 —</span>
+        </div>
+      </div>
+
+      <div class="tools">
+        <div class="tgroup">
+          <button class="tool" id="t-in"  title="확대 (+)" aria-label="확대">+</button>
+          <button class="tool" id="t-out" title="축소 (−)" aria-label="축소">−</button>
+        </div>
+        <div class="tgroup">
+          <button class="tool" id="t-fit" title="전체 보기 (F)" aria-label="전체 보기">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/></svg>
+          </button>
+          <button class="tool" id="t-follow" title="로봇 추적 (R)" aria-label="로봇 추적" aria-pressed="true">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3.2"/><circle cx="12" cy="12" r="8"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="layers">
+        <h4>표시</h4>
+        <label><input type="checkbox" id="l-unknown" checked>미탐사 영역</label>
+        <label><input type="checkbox" id="l-trail" checked>이동 궤적</label>
+        <label><input type="checkbox" id="l-labels" checked>탐지 라벨</label>
+        <label><input type="checkbox" id="l-grid">1m 격자</label>
+        <label><input type="checkbox" id="l-zones" checked>순찰 구역</label>
+        <label><input type="checkbox" id="l-route" checked>순찰 경로</label>
+      </div>
+
+      <div class="notice" id="notice" hidden><span id="notice-t"></span></div>
+
+      <!-- 지도를 더블클릭하면 뜨는 이동 확인창.
+           단일 클릭은 지도 이동(드래그)이라 뺏을 수 없고, 실물 로봇을 움직이는
+           명령이라 한 번 더 묻는다. -->
+      <div class="patrol-bar" id="patrol-bar" hidden>
+        <button id="patrol-start">▶ 순찰 시작</button>
+        <button id="patrol-resume" hidden>▶ 재개</button>
+        <button id="patrol-stop" hidden>■ 정지</button>
+        <span class="patrol-hint" id="patrol-hint"></span>
+      </div>
+
+      <div class="goto-ask" id="goto-ask" hidden>
+        <h4>여기로 로봇을 보낼까요?</h4>
+        <p>목표 지점 <code id="goto-xy">—</code></p>
+        <p>진행 중인 순찰은 중지되고 이 이동 명령이 우선합니다.</p>
+        <div class="row">
+          <button id="goto-cancel">취소</button>
+          <button class="go" id="goto-ok">이동</button>
+        </div>
+      </div>
+
+      <div class="scalebar"><i id="sb-bar" style="width:80px"></i><span id="sb-txt">—</span></div>
+      <div class="cursor" id="cursor">—</div>
+    </div>
+
+    <aside class="side">
+      <header>
+        <h2>탐지 목록</h2>
+        <span class="count" id="det-count">0건</span>
+      </header>
+
+      <div class="list" id="list"></div>
+
+      <div class="legend">
+        <h4>범례</h4>
+        <div><i class="chip" style="background:var(--robot)"></i>로봇 위치 · 진행 방향</div>
+        <div><i class="chip" style="background:var(--fire)"></i>화재</div>
+        <div><i class="chip" style="background:var(--helmet)"></i>헬멧 미착용</div>
+        <div><i class="chip" style="background:var(--person)"></i>작업자</div>
+        <div><i class="chip" style="background:var(--vehicle)"></i>차량·중장비</div>
+        <div><i class="chip" style="background:var(--blind)"></i>낮은 장애물 (LiDAR 사각 · 치워야 함)</div>
+        <div><i class="chip sq" style="background:var(--map-unknown); border:1px solid var(--map-edge)"></i>미탐사 영역</div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="hint">
+    <span>드래그로 이동</span>
+    <span>휠로 확대·축소</span>
+    <span><kbd>F</kbd> 전체 보기</span>
+    <span><kbd>R</kbd> 로봇 추적</span>
+    <span><kbd>+</kbd> <kbd>−</kbd> 배율</span>
+    <span>탐지 항목을 누르면 해당 위치로 이동합니다</span>
+    <span>지도를 <b>더블클릭</b>하면 로봇을 그 지점으로 보냅니다</span>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ==========================================================================
+   순찰 미니맵 — 브라우저 렌더러
+
+   서버(minimap_renderer.py)가 제공해야 하는 것:
+     GET map_data -> {ready, version, w, h, res, ox, oy, cells}
+                     cells = base64(bytes), 0=자유 1=장애물 2=미탐사, 행 우선
+                     row 0 = 지도 y 최소 (ROS OccupancyGrid 와 동일 순서)
+     GET state    -> {ready, stamp, robot:{x,y,yaw}|null, detections:[...]}
+                     stamp / last_seen 은 둘 다 "서버 시계" 기준 초.
+                     경과 시간은 서버 시계 안에서만 빼서 쓰므로 클라이언트와
+                     시계가 어긋나도 영향이 없습니다.
+
+   데모 데이터는 주소에 ?demo=1 을 붙였을 때만 나옵니다.
+   서버에 못 닿았다고 해서 가짜 탐지를 자동으로 띄우지 않습니다.
+   ========================================================================== */
+
+const QS = new URLSearchParams(location.search);
+const DEMO = QS.has("demo");
+
+/* MINIMAP_TOKEN 을 켠 경우, 이 페이지를 ?t=<토큰> 으로 열면
+   같은 토큰이 API 요청에도 자동으로 따라붙습니다. */
+const TOKEN = QS.get("t") || "";
+
+function apiURL(path, extra){
+  const u = new URL(path, location.href);
+  if(TOKEN) u.searchParams.set("t", TOKEN);
+  if(extra) for(const k of Object.keys(extra)) u.searchParams.set(k, extra[k]);
+  return u.toString();
+}
+
+const CFG = {
+  pollMs: 200,
+  mapCheckMs: 4000,
+  fetchTimeoutMs: 1500,
+  navigationPollMs: 400,
+  navigationTrackMs: 30 * 60 * 1000,
+  staleSec: 4,          // 이 시간 넘게 응답이 없으면 화면을 덮는다
+  trailMax: 400,
+  trailMinStep: 0.04,
+  detFreshSec: 4,
+  maxCells: 4e6,        // 약 2000x2000 — 손상된 응답으로 메모리를 태우지 않도록
+  maxRes: 5,            // m/cell 상한
+  api: { map: "map_data", state: "state", zones: "zones" }
+};
+
+const FREE = 0, WALL = 1, UNKNOWN = 2;
+
+/* 프로토타입 체인을 타지 않도록 null 프로토 객체로 만든다
+   ("constructor", "toString" 같은 라벨이 들어와도 안전) */
+const LABELS = Object.create(null);
+LABELS["fire"]                   = { ko:"화재",       tok:"--fire" };
+LABELS["no safety helmet"]       = { ko:"헬멧 미착용", tok:"--helmet" };
+LABELS["no_helmet"]              = { ko:"헬멧 미착용", tok:"--helmet" };
+LABELS["helmet_violation"]       = { ko:"헬멧 미착용", tok:"--helmet" };
+LABELS["person without helmet"]  = { ko:"헬멧 미착용", tok:"--helmet" };
+LABELS["person with no helmet"]  = { ko:"헬멧 미착용", tok:"--helmet" };
+LABELS["person"]                 = { ko:"작업자",     tok:"--person" };
+LABELS["vehicle"]                = { ko:"차량·중장비", tok:"--vehicle" };
+/* 젯슨 text_prompt 의 네 클래스가 모두 위에 있어야 합니다. 빠진 클래스는
+   labelOf() 폴백으로 떨어져 회색 점 + 영문 원문으로 뜨는데, 범례에도 없어서
+   화면만 봐서는 무엇인지 알 수 없습니다. vehicle 이 그 상태였습니다. */
+
+function labelOf(raw){
+  const k = String(raw == null ? "" : raw);
+  return LABELS[k] || LABELS[k.toLowerCase()] || { ko: k || "미분류", tok:"--other" };
+}
+
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+const $ = id => document.getElementById(id);
+const clamp = (v,a,b) => v < a ? a : (v > b ? b : v);
+const isNum = v => typeof v === "number" && Number.isFinite(v);
+function num(v, fb){ const n = Number(v); return Number.isFinite(n) ? n : fb; }
+
+/* ---------- 상태 ---------- */
+const S = {
+  grid:null, version:null,
+  robot:null, shown:null,
+  detections:[], trail:[], route:[], routeLoop:true, status:null,
+  navigation:null, navigationKey:null, poseAge:null, controlEnabled:false,
+  blind:[],
+  zones:[], zoneRaster:null, zoneVersion:null,
+  lastOk:0,            // 마지막으로 state 를 성공적으로 받은 시각(클라 시계, ms)
+  linkTried:false,
+  hasDet:false,
+  focus:null
+};
+const V = { zoom:4, panX:0, panY:0, follow:true, ready:false };
+const L = { unknown:true, trail:true, labels:true, grid:false, zones:true, route:true };
+
+/* ---------- 캔버스 ---------- */
+const cv = $("map");
+const ctx = cv.getContext("2d");
+let raster = null, dpr = 1, VW = 0, VH = 0, bodyFont = "sans-serif";
+
+function resize(){
+  dpr = Math.min(window.devicePixelRatio || 1, 2);
+  const r = cv.getBoundingClientRect();
+  VW = Math.max(1, Math.round(r.width));
+  VH = Math.max(1, Math.round(r.height));
+  cv.width  = Math.round(VW * dpr);
+  cv.height = Math.round(VH * dpr);
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+new ResizeObserver(resize).observe(cv);
+
+/* ---------- 좌표 변환 ---------- */
+function w2s(x, y){
+  const g = S.grid;
+  return [ ((x - g.ox) / g.res) * V.zoom + V.panX,
+           (g.h - (y - g.oy) / g.res) * V.zoom + V.panY ];
+}
+function s2w(px, py){
+  const g = S.grid;
+  const cx = (px - V.panX) / V.zoom, cy = (py - V.panY) / V.zoom;
+  return [ cx * g.res + g.ox, (g.h - cy) * g.res + g.oy ];
+}
+
+/* ---------- 지도 래스터 ---------- */
+function buildRaster(){
+  raster = document.createElement("canvas");
+  raster.width = S.grid.w; raster.height = S.grid.h;
+  paintRaster();
+}
+function paintRaster(){
+  if(!raster || !S.grid) return;
+  const g = S.grid, rc = raster.getContext("2d");
+  const img = rc.createImageData(g.w, g.h), d = img.data;
+  const css  = getComputedStyle(document.documentElement);
+  const free = rgb(css.getPropertyValue("--map-free"));
+  const wall = rgb(css.getPropertyValue("--map-wall"));
+  const unk  = rgb(css.getPropertyValue("--map-unknown"));
+
+  for(let row = 0; row < g.h; row++){
+    const src = row * g.w, dst = (g.h - 1 - row) * g.w;   // 그리드 y↑ vs 이미지 y↓
+    for(let col = 0; col < g.w; col++){
+      const v = g.cells[src + col];
+      const c = v === WALL ? wall : (v === FREE ? free : unk);
+      const i = (dst + col) * 4;
+      d[i] = c[0]; d[i+1] = c[1]; d[i+2] = c[2];
+      d[i+3] = (v === UNKNOWN && !L.unknown) ? 0 : 255;
+    }
+  }
+  rc.putImageData(img, 0, 0);
+}
+function rgb(s){
+  s = String(s).trim();
+  if(s.charAt(0) === "#"){
+    const h = s.slice(1);
+    const f = h.length === 3 ? h.replace(/./g, c => c + c) : h;
+    return [parseInt(f.slice(0,2),16) || 0, parseInt(f.slice(2,4),16) || 0, parseInt(f.slice(4,6),16) || 0];
+  }
+  const m = s.match(/\d+/g) || ["0","0","0"];
+  return [+m[0] || 0, +m[1] || 0, +m[2] || 0];
+}
+
+/* ---------- 뷰 ---------- */
+function fit(pad){
+  if(!S.grid) return;
+  pad = pad == null ? 28 : pad;
+  const g = S.grid;
+  V.zoom = Math.max(0.5, Math.min((VW - pad*2) / g.w, (VH - pad*2) / g.h));
+  V.panX = (VW - g.w * V.zoom) / 2;
+  V.panY = (VH - g.h * V.zoom) / 2;
+  V.ready = true;
+}
+function zoomAt(px, py, factor){
+  const next = clamp(V.zoom * factor, 1, 60), k = next / V.zoom;
+  V.panX = px - (px - V.panX) * k;
+  V.panY = py - (py - V.panY) * k;
+  V.zoom = next;
+}
+function centerOn(x, y){
+  const g = S.grid; if(!g) return;
+  V.panX = VW/2 - ((x - g.ox)/g.res) * V.zoom;
+  V.panY = VH/2 - (g.h - (y - g.oy)/g.res) * V.zoom;
+}
+function unfollow(){ V.follow = false; $("t-follow").setAttribute("aria-pressed","false"); }
+
+/* ---------- 그리기 ---------- */
+function draw(){
+  requestAnimationFrame(draw);
+  if(!S.grid || !V.ready){ ctx.clearRect(0,0,VW,VH); return; }
+
+  const css = getComputedStyle(document.documentElement);
+  ctx.clearRect(0,0,VW,VH);
+
+  if(S.robot){
+    if(!S.shown || REDUCED){
+      S.shown = { x:S.robot.x, y:S.robot.y, yaw:S.robot.yaw };
+    }else{
+      const a = 0.18;
+      S.shown.x += (S.robot.x - S.shown.x) * a;
+      S.shown.y += (S.robot.y - S.shown.y) * a;
+      let d = S.robot.yaw - S.shown.yaw;
+      while(d >  Math.PI) d -= Math.PI*2;
+      while(d < -Math.PI) d += Math.PI*2;
+      S.shown.yaw += d * a;
+    }
+  }
+  if(V.follow && S.shown) centerOn(S.shown.x, S.shown.y);
+
+  const g = S.grid;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(raster, V.panX, V.panY, g.w * V.zoom, g.h * V.zoom);
+
+  ctx.strokeStyle = css.getPropertyValue("--map-edge").trim();
+  ctx.lineWidth = 1;
+  ctx.strokeRect(V.panX + .5, V.panY + .5, g.w * V.zoom - 1, g.h * V.zoom - 1);
+
+  if(L.zones) drawZones(css);
+  if(L.grid)  drawGrid(css);
+  if(L.trail) drawTrail(css);
+  if(L.route) drawRoute(css);
+  drawBlindObstacles(css);
+  drawDetections(css);
+  if(S.shown) drawRobot(css);
+}
+
+function drawGrid(css){
+  const g = S.grid;
+  if(1 / g.res * V.zoom < 14) return;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(V.panX, V.panY, g.w*V.zoom, g.h*V.zoom); ctx.clip();
+  ctx.strokeStyle = css.getPropertyValue("--map-edge").trim();
+  ctx.globalAlpha = .3; ctx.lineWidth = 1;
+  ctx.beginPath();
+  for(let x = Math.ceil(g.ox); x <= g.ox + g.w*g.res; x++){
+    const p = w2s(x,0)[0] + .5;
+    ctx.moveTo(p, V.panY); ctx.lineTo(p, V.panY + g.h*V.zoom);
+  }
+  for(let y = Math.ceil(g.oy); y <= g.oy + g.h*g.res; y++){
+    const p = w2s(0,y)[1] + .5;
+    ctx.moveTo(V.panX, p); ctx.lineTo(V.panX + g.w*V.zoom, p);
+  }
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawTrail(css){
+  const n = S.trail.length;
+  if(n < 2) return;
+  const col = css.getPropertyValue("--robot").trim();
+  ctx.lineCap = "round"; ctx.lineJoin = "round"; ctx.strokeStyle = col;
+  for(let i = 1; i < n; i++){
+    const t = i / n;
+    ctx.globalAlpha = 0.06 + t * 0.5;
+    ctx.lineWidth = 1 + t * 1.4;
+    const a = w2s(S.trail[i-1][0], S.trail[i-1][1]);
+    const b = w2s(S.trail[i][0],   S.trail[i][1]);
+    ctx.beginPath(); ctx.moveTo(a[0],a[1]); ctx.lineTo(b[0],b[1]); ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+}
+
+/* 구역은 반투명 색면으로 지도 위에 얹는다. 라벨 라스터를 오프스크린
+   캔버스에 한 번만 칠해두고, 매 프레임에는 그것만 확대해서 그린다
+   (셀 하나씩 그리면 20만 개짜리 지도에서 프레임이 무너진다). */
+const ZONE_COLORS = ["#3b82f6","#22c55e","#f59e0b","#a855f7","#ec4899","#14b8a6"];
+let zoneCanvas = null;
+
+function buildZoneRaster(){
+  if(!S.zoneRaster || !S.grid) { zoneCanvas = null; return; }
+  const g = S.grid;
+  const c = document.createElement("canvas");
+  c.width = g.w; c.height = g.h;
+  const cx = c.getContext("2d");
+  const img = cx.createImageData(g.w, g.h);
+  for(let row = 0; row < g.h; row++){
+    for(let col = 0; col < g.w; col++){
+      const zone = S.zoneRaster[row * g.w + col];
+      if(!zone) continue;
+      /* 지도 배열은 아래에서 위로 쌓이므로 캔버스 좌표로 뒤집는다 */
+      const o = (((g.h - 1 - row) * g.w) + col) * 4;
+      const hex = ZONE_COLORS[(zone - 1) % ZONE_COLORS.length];
+      img.data[o]   = parseInt(hex.slice(1,3), 16);
+      img.data[o+1] = parseInt(hex.slice(3,5), 16);
+      img.data[o+2] = parseInt(hex.slice(5,7), 16);
+      img.data[o+3] = 46;
+    }
+  }
+  cx.putImageData(img, 0, 0);
+  zoneCanvas = c;
+}
+
+function drawZones(css){
+  if(!zoneCanvas || !S.grid) return;
+  const g = S.grid;
+  ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(zoneCanvas, V.panX, V.panY, g.w * V.zoom, g.h * V.zoom);
+
+  if(!L.labels) return;
+  ctx.font = "600 " + clamp(V.zoom * 3.4, 11, 20) + "px " + bodyFont;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  for(const z of S.zones){
+    const [px, py] = w2s(z.x, z.y);
+    const hex = ZONE_COLORS[(z.index - 1) % ZONE_COLORS.length];
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = css.getPropertyValue("--panel").trim();
+    ctx.strokeText(z.name, px, py);
+    ctx.fillStyle = hex;
+    ctx.fillText(z.name, px, py);
+  }
+}
+
+/* 순찰 경로 — patrol_node 가 알려준 실제 웨이포인트. 소스의 기본값이 아니라
+   지금 도는 값이라, 파라미터로 바꿔도 화면이 따라온다. */
+function drawRoute(css){
+  if(S.route.length < 2) return;
+  ctx.save();
+  ctx.strokeStyle = css.getPropertyValue("--robot").trim();
+  ctx.globalAlpha = 0.55;
+  ctx.lineWidth = clamp(V.zoom * 0.35, 1.5, 4);
+  ctx.setLineDash([clamp(V.zoom*1.6, 6, 14), clamp(V.zoom*1.1, 4, 10)]);
+  ctx.beginPath();
+  const first = w2s(S.route[0].x, S.route[0].y);
+  ctx.moveTo(first[0], first[1]);
+  for(let i = 1; i < S.route.length; i++){
+    const [px, py] = w2s(S.route[i].x, S.route[i].y);
+    ctx.lineTo(px, py);
+  }
+  if(S.routeLoop) ctx.lineTo(first[0], first[1]);
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.globalAlpha = 0.9;
+
+  ctx.font = "600 " + clamp(V.zoom * 2.6, 9, 14) + "px " + bodyFont;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  for(let i = 0; i < S.route.length; i++){
+    const [px, py] = w2s(S.route[i].x, S.route[i].y);
+    const r = clamp(V.zoom * 0.9, 6, 12);
+    ctx.fillStyle = css.getPropertyValue("--panel").trim();
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = css.getPropertyValue("--robot").trim();
+    ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.stroke();
+    ctx.fillStyle = css.getPropertyValue("--robot").trim();
+    ctx.fillText(String(i + 1), px, py);
+  }
+  ctx.restore();
+}
+
+function drawBlindObstacles(css){
+  /* 탐지 마커(원)와 헷갈리지 않게 X 로 그린다. "센서가 못 보는 것" 이라는
+     성격이 달라서, 모양부터 구분되는 편이 낫다. */
+  if(!S.blind.length || !S.grid) return;
+  const col = css.getPropertyValue("--blind").trim();
+  for(const item of S.blind){
+    const [px, py] = w2s(item.x, item.y);
+    const r = clamp(item.radius / S.grid.res * V.zoom, 6, 26);
+
+    ctx.save();
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI * 2); ctx.stroke();
+    ctx.setLineDash([]);
+
+    const arm = r * 0.55;
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(px - arm, py - arm); ctx.lineTo(px + arm, py + arm);
+    ctx.moveTo(px + arm, py - arm); ctx.lineTo(px - arm, py + arm);
+    ctx.stroke();
+
+    if(L.labels && item.hits > 1){
+      ctx.fillStyle = col;
+      ctx.font = "600 11px ui-sans-serif, system-ui, sans-serif";
+      ctx.textAlign = "left"; ctx.textBaseline = "middle";
+      ctx.fillText(item.hits + "회", px + r + 4, py);
+    }
+    ctx.restore();
+  }
+}
+
+function drawRobot(css){
+  const [px,py] = w2s(S.shown.x, S.shown.y);
+  const col = css.getPropertyValue("--robot").trim();
+  const r = clamp(V.zoom * 1.6, 6, 15);
+
+  // 시야 콘 (약 60°) — 캔버스 y축이 뒤집혀 있어 각도 부호를 반전
+  ctx.save();
+  ctx.translate(px,py); ctx.rotate(-S.shown.yaw);
+  ctx.fillStyle = css.getPropertyValue("--robot-cone").trim();
+  ctx.beginPath(); ctx.moveTo(0,0);
+  ctx.arc(0, 0, clamp(V.zoom * 26, 40, 190), -0.52, 0.52);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+
+  if(!REDUCED){
+    const t = (performance.now() % 2200) / 2200;
+    ctx.globalAlpha = (1 - t) * .5;
+    ctx.strokeStyle = col; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(px, py, r + t*24, 0, Math.PI*2); ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  ctx.save();
+  ctx.translate(px,py); ctx.rotate(-S.shown.yaw);
+  ctx.fillStyle = col;
+  ctx.beginPath();
+  ctx.moveTo(r*1.35, 0);
+  ctx.lineTo(-r*.78,  r*.82);
+  ctx.lineTo(-r*.34, 0);
+  ctx.lineTo(-r*.78, -r*.82);
+  ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = css.getPropertyValue("--map-free").trim();
+  ctx.lineWidth = 1.4; ctx.stroke();
+  ctx.restore();
+}
+
+function drawDetections(css){
+  const labelOn = L.labels && V.zoom > 2.2;
+  ctx.textBaseline = "middle";
+  for(const d of S.detections){
+    const [px,py] = w2s(d.x, d.y);
+    const info = labelOf(d.label);
+    const col = css.getPropertyValue(info.tok).trim() || css.getPropertyValue("--other").trim();
+    const r = clamp(V.zoom * 0.9, 4.5, 9);
+
+    if(ageOf(d) < CFG.detFreshSec && !REDUCED){
+      const t = (performance.now() % 1400) / 1400;
+      ctx.globalAlpha = (1-t) * .55; ctx.fillStyle = col;
+      ctx.beginPath(); ctx.arc(px, py, r + t*20, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    if(S.focus === d.id){
+      ctx.strokeStyle = col; ctx.lineWidth = 1.4; ctx.setLineDash([3,3]);
+      ctx.beginPath(); ctx.arc(px, py, r + 8, 0, Math.PI*2); ctx.stroke();
+      ctx.setLineDash([]);
+    }
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = css.getPropertyValue("--map-free").trim();
+    ctx.lineWidth = 1.6; ctx.stroke();
+
+    if(labelOn){
+      const txt = info.ko + " #" + d.id;
+      ctx.font = "600 11px " + bodyFont;
+      const w = ctx.measureText(txt).width;
+      const bx = px + r + 6, by = py - 9;
+      ctx.globalAlpha = .92;
+      ctx.fillStyle = css.getPropertyValue("--panel").trim();
+      roundRect(bx, by, w + 12, 18, 4); ctx.fill();
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = col; ctx.lineWidth = 1;
+      roundRect(bx + .5, by + .5, w + 11, 17, 4); ctx.stroke();
+      ctx.fillStyle = css.getPropertyValue("--ink").trim();
+      ctx.fillText(txt, bx + 6, by + 9.5);
+    }
+  }
+}
+function roundRect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);
+  ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);     ctx.arcTo(x,y,x+w,y,r);
+  ctx.closePath();
+}
+
+/* 탐지 경과 시간(초).
+   d.age 는 서버 시계 안에서 계산된 값이고, 그 뒤 흐른 시간만 로컬로 더한다.
+   서버와 클라이언트 시계가 어긋나도 영향을 받지 않는다. */
+function ageOf(d){ return d.age + (performance.now() - d.at) / 1000; }
+
+/* ---------- HUD ---------- */
+function setPill(el, state, text){
+  el.dataset.s = state;
+  el.lastElementChild.textContent = text;
+}
+function linkAge(){ return S.lastOk ? (Date.now() - S.lastOk) / 1000 : Infinity; }
+
+function navigationView(nav){
+  if(!nav || typeof nav !== "object") return { text:"—", state:"off" };
+  const phase = String(nav.phase || nav.status || "").toLowerCase();
+  const state = String(nav.state || "").toLowerCase();
+  const d = nav.distance_remaining == null ? NaN : Number(nav.distance_remaining);
+  const distance = Number.isFinite(d) && d >= 0 ? " · " + d.toFixed(1) + "m" : "";
+
+  if(phase === "canceling"){
+    return { text:"정지 요청 처리 중", state:"run" };
+  }
+  const hasGoal = nav.goal_type === "goto" || nav.goal_type === "patrol"
+               || (nav.goal && typeof nav.goal === "object");
+  if(state === "navigating" || (hasGoal && (phase === "received" || phase === "accepted"))){
+    return { text:"이동 중" + distance, state:"run" };
+  }
+  if(phase === "received" || phase === "accepted"){
+    return { text:"명령 접수", state:"run" };
+  }
+  if(phase === "succeeded") return { text:"목표 도착", state:"ok" };
+  if(phase === "rejected")  return { text:"목표 거부", state:"bad" };
+  if(phase === "failed")    return { text:"이동 실패", state:"bad" };
+  if(phase === "canceled"){
+    return { text:(nav.command === "stop" || nav.command === "pause")
+                  ? "정지 완료" : "이동 취소", state:"off" };
+  }
+  return { text:"—", state:"off" };
+}
+
+function updateHUD(){
+  const g = S.grid, age = linkAge();
+  const stale = S.linkTried && !DEMO && age > CFG.staleSec;
+  if(stale){
+    /* /state 자체가 끊긴 경우에는 서버의 robot:null도 받을 수 없으므로
+       클라이언트가 마지막 마커를 지운다. */
+    S.robot = null;
+    S.shown = null;
+    S.poseAge = null;
+    S.controlEnabled = false;
+  }
+
+  $("viewport").classList.toggle("is-stale", stale);
+  if(stale) $("stale-t").textContent =
+    "마지막 수신 " + (age === Infinity ? "없음" : Math.round(age) + "초 전");
+
+  setPill($("p-map"), g ? "ok" : "off",
+          g ? `지도 ${(g.w*g.res).toFixed(1)}×${(g.h*g.res).toFixed(1)}m` : "지도 대기");
+  setPill($("p-pose"), stale ? "bad" : (S.robot ? "ok" : "off"),
+          stale ? "위치 두절" : (S.robot ? "로봇 위치" : "위치 대기"));
+  setPill($("p-det"), S.hasDet ? "ok" : "off",
+          S.hasDet ? `탐지 ${S.detections.length}건` : "탐지 없음");
+
+  /* 배터리·순찰은 값이 없을 때 0 으로 채우지 않는다. 시뮬레이션이나 배터리
+     미장착이면 토픽 자체가 오지 않는데, 0% 로 그리면 방전으로 읽힌다. */
+  const bat = S.status && S.status.battery;
+  $("r-bat").textContent = !bat ? "—"
+    : (bat.percent == null ? "—" : bat.percent.toFixed(0) + "%") + (bat.charging ? " ⚡" : "");
+  const pat = S.status && S.status.patrol;
+  $("r-patrol").textContent = !pat ? "—"
+    : ({ patrolling: "순찰 중", navigating: "선택 위치 이동",
+         paused: "일시정지", idle: "대기" }[pat.state] || pat.state)
+      + (pat.total ? " " + pat.index + "/" + pat.total : "");
+  updatePatrolBar(pat);
+  const nav = navigationView(S.navigation);
+  $("r-nav").textContent = nav.text;
+  $("r-nav").dataset.s = nav.state;
+  $("r-nav").title = S.navigation && S.navigation.message
+    ? String(S.navigation.message) : "";
+
+  $("r-x").textContent = S.robot ? S.robot.x.toFixed(2) : "—";
+  $("r-y").textContent = S.robot ? S.robot.y.toFixed(2) : "—";
+  $("r-yaw").textContent = S.robot
+    ? (((S.robot.yaw * 180 / Math.PI) % 360 + 360) % 360).toFixed(0) + "°" : "—";
+  const poseAge = S.poseAge == null ? NaN : Number(S.poseAge);
+  $("r-age").textContent = Number.isFinite(poseAge)
+    ? (poseAge < 0.15 ? "실시간" : poseAge.toFixed(1) + "초 전")
+    : (age === Infinity ? "—" : Math.round(age) + "초 전");
+
+  if(g){
+    let pick = 0.5;
+    for(const n of [0.5,1,2,5,10,20,50]) if(n / g.res * V.zoom <= 120) pick = n;
+    $("sb-bar").style.width = (pick / g.res * V.zoom).toFixed(0) + "px";
+    $("sb-txt").textContent = pick >= 1 ? pick + " m" : (pick*100) + " cm";
+  }
+}
+
+/* ---------- 탐지 목록 (innerHTML 없이 DOM API 로만 구성) ---------- */
+function el(tag, cls, txt){
+  const e = document.createElement(tag);
+  if(cls) e.className = cls;
+  if(txt != null) e.textContent = txt;
+  return e;
+}
+function agoText(sec){
+  if(sec < 2)  return "방금";
+  if(sec < 60) return Math.round(sec) + "초 전";
+  if(sec < 3600) return Math.round(sec/60) + "분 전";
+  return Math.round(sec/3600) + "시간 전";
+}
+
+function renderList(){
+  const list = $("list");
+  $("det-count").textContent = S.detections.length + "건";
+  list.replaceChildren();
+
+  if(!S.detections.length){
+    const e = el("div","empty");
+    e.append("아직 탐지된 이벤트가 없습니다.", el("br"), "순찰이 진행되면 여기에 표시됩니다.");
+    list.append(e);
+    return;
+  }
+
+  const sorted = S.detections.slice().sort((a,b) => ageOf(a) - ageOf(b));
+
+  for(const d of sorted){
+    const info = labelOf(d.label);
+    const card = el("button","card");
+    card.type = "button";
+    card.dataset.id = String(d.id);                 // dataset 은 HTML 로 파싱되지 않는다
+    card.style.setProperty("--sev", "var(" + info.tok + ")");
+    card.setAttribute("aria-current", String(S.focus === d.id));
+
+    const top = el("span","top");
+    top.append(el("span","name", info.ko), el("span","id", "#" + d.id));
+
+    const m1 = el("span","meta");
+    const pos = el("span");
+    pos.append(el("em",null,"위치"), " " + d.x.toFixed(2) + ", " + d.y.toFixed(2));
+    m1.append(pos);
+    if(S.robot){
+      const dist = el("span");
+      dist.append(el("em",null,"거리"), " " + Math.hypot(d.x - S.robot.x, d.y - S.robot.y).toFixed(1) + "m");
+      m1.append(dist);
+    }
+
+    const m2 = el("span","meta");
+    const conf = el("span");
+    conf.append(el("em", null, "확신"));
+    m2.append(conf);
+    const bars = el("span","bars");
+    const on = clamp(Math.round(d.hit_count / 2), 0, 5);
+    for(let i = 0; i < 5; i++){
+      const s = el("s"); if(i < on) s.className = "on"; bars.append(s);
+    }
+    m2.append(bars, el("span","ago", agoText(ageOf(d))));
+
+    card.append(top, m1, m2);
+    list.append(card);
+  }
+}
+
+$("list").addEventListener("click", e => {
+  const card = e.target.closest(".card");
+  if(!card) return;
+  const id = Number(card.dataset.id);
+  const d = S.detections.find(x => x.id === id);
+  if(!d) return;
+  S.focus = (S.focus === id) ? null : id;
+  if(S.focus !== null){ unfollow(); centerOn(d.x, d.y); }
+  renderList();
+});
+
+/* ---------- 입력 ---------- */
+let drag = null;
+cv.addEventListener("pointerdown", e => {
+  drag = { x:e.clientX, y:e.clientY, px:V.panX, py:V.panY };
+  cv.setPointerCapture(e.pointerId);
+  cv.classList.add("drag");
+});
+cv.addEventListener("pointermove", e => {
+  const r = cv.getBoundingClientRect();
+  if(S.grid && V.ready){
+    const [wx,wy] = s2w(e.clientX - r.left, e.clientY - r.top);
+    $("cursor").textContent = wx.toFixed(2) + ", " + wy.toFixed(2) + " m";
+    $("cursor").classList.add("on");
+  }
+  if(!drag) return;
+  V.panX = drag.px + (e.clientX - drag.x);
+  V.panY = drag.py + (e.clientY - drag.y);
+  if(Math.abs(e.clientX - drag.x) + Math.abs(e.clientY - drag.y) > 3) unfollow();
+});
+const endDrag = () => { drag = null; cv.classList.remove("drag"); };
+cv.addEventListener("pointerup", endDrag);
+cv.addEventListener("pointercancel", endDrag);
+cv.addEventListener("pointerleave", () => $("cursor").classList.remove("on"));
+/* ---------- 순찰 제어 ---------- */
+/* 버튼 구성은 순찰 상태를 따라간다. 대기 중이면 '시작', 도는 중이면 '정지',
+   멈춰 있으면 '재개'와 '정지'. 무엇을 눌러야 할지 화면이 알려주게 한다. */
+function updatePatrolBar(pat){
+  const bar = $("patrol-bar");
+  if(!S.controlEnabled){ bar.hidden = true; return; }
+  bar.hidden = false;
+
+  const state = pat ? pat.state : null;
+  const navigating = state === "navigating";
+  const running = state === "patrolling" || navigating;
+  const paused  = state === "paused";
+  const starting = pendingPatrolCommands.has("start")
+                || pendingPatrolCommands.has("resume");
+  $("patrol-start").hidden  = running || paused || starting;
+  $("patrol-resume").hidden = !paused || starting;
+  $("patrol-stop").hidden   = !(running || paused || starting);
+
+  if(patrolHint){ $("patrol-hint").textContent = patrolHint; return; }
+  $("patrol-hint").textContent =
+    state === null ? "순찰 노드 응답 없음"
+    : navigating ? "선택한 위치로 이동하는 중"
+    : running ? "구역을 순회하는 중"
+    : paused  ? "일시정지됨"
+    : "지금 지도로 경로를 만들어 시작합니다";
+}
+
+let patrolHint = "";
+const pendingPatrolCommands = new Set();
+
+async function sendPatrol(command, label){
+  const buttonByCommand = {
+    start: $("patrol-start"), resume: $("patrol-resume"), stop: $("patrol-stop"),
+  };
+  pendingPatrolCommands.add(command);
+  buttonByCommand[command].disabled = true;
+  updatePatrolBar(S.status && S.status.patrol);
+  try{
+    const r = await fetch(apiURL("/patrol"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ command }),
+    });
+    const data = await r.json().catch(() => ({}));
+    if(data.request_id && data.pending){
+      trackNavigationRequest(data.request_id, label, data.navigation);
+    }
+    if(r.status === 202 && data.pending){
+      const plan = data.plan;
+      patrolHint = plan && Array.isArray(plan.waypoints)
+        ? plan.waypoints.length + "개 지점 · 접수 확인 대기" : "";
+      notice(true, label + " 전송됨 — 제어기 접수 확인 대기", 6000);
+    }else if(r.ok && data.ok){
+      if(data.plan){
+        /* 몇 개 지점을 얼마나 도는지 알려준다. 로봇이 움직이기 전에
+           "이 경로가 맞나" 를 사람이 판단할 근거가 된다. */
+        const plan = data.plan;
+        patrolHint = plan.waypoints.length + "개 지점 · 한 바퀴 "
+                   + plan.total_distance_m.toFixed(1) + "m";
+        notice(true, label + " — " + patrolHint, 5000);
+        if(plan.warnings && plan.warnings.length){
+          console.warn("[순찰 계획]", plan.warnings.join(" / "));
+        }
+      }else{
+        patrolHint = "";
+        notice(true, label, 5000);
+      }
+    }else{
+      notice(true, label + " 실패 — " + (data.error || ("HTTP " + r.status)), 7000);
+    }
+  }catch(err){
+    notice(true, label + " 명령을 보내지 못했습니다", 7000);
+  }finally{
+    pendingPatrolCommands.delete(command);
+    buttonByCommand[command].disabled = false;
+    updatePatrolBar(S.status && S.status.patrol);
+  }
+}
+
+$("patrol-start").addEventListener("click", () => {
+  if(confirm("현재 지도로 경로를 만들고 자율 순찰을 시작할까요?")){
+    sendPatrol("start", "순찰 시작 명령이 접수되었습니다");
+  }
+});
+$("patrol-resume").addEventListener("click", () => {
+  if(confirm("일시정지한 자율 순찰을 재개할까요?")){
+    sendPatrol("resume", "순찰 재개 명령이 접수되었습니다");
+  }
+});
+$("patrol-stop").addEventListener("click", () => {
+  patrolHint = "";
+  sendPatrol("stop", "순찰 정지 명령이 접수되었습니다");
+});
+
+/* ---------- 더블클릭 이동 (디지털 트윈) ---------- */
+/* 단일 클릭은 지도 드래그라 쓸 수 없다. 그리고 이건 화면 조작이 아니라 실물
+   로봇을 움직이는 명령이라, 확인창을 한 번 거친다. */
+let gotoTarget = null;
+
+cv.addEventListener("dblclick", e => {
+  if(!S.controlEnabled){
+    notice(true, "내비게이션 제어기가 연결되지 않아 이동 명령을 사용할 수 없습니다.", 5000);
+    return;
+  }
+  if(!S.grid || !V.ready) return;
+  const r = cv.getBoundingClientRect();
+  const [wx, wy] = s2w(e.clientX - r.left, e.clientY - r.top);
+  gotoTarget = { x: wx, y: wy };
+  $("goto-xy").textContent = wx.toFixed(2) + ", " + wy.toFixed(2) + " m";
+  $("goto-ok").disabled = false;
+  $("goto-ok").textContent = "이동";
+  $("goto-ask").hidden = false;
+});
+
+$("goto-cancel").addEventListener("click", () => {
+  $("goto-ask").hidden = true;
+  gotoTarget = null;
+});
+
+$("goto-ok").addEventListener("click", async () => {
+  if(!gotoTarget) return;
+  const btn = $("goto-ok");
+  btn.disabled = true;
+  btn.textContent = "보내는 중…";
+  try{
+    const r = await fetch(apiURL("/goto"), {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        x: gotoTarget.x,
+        y: gotoTarget.y,
+      }),
+    });
+    const data = await r.json().catch(() => ({}));
+    const responsePhase = data.navigation
+      ? String(data.navigation.phase || data.navigation.status || "").toLowerCase() : "";
+    if(data.request_id && (data.pending
+       || (data.ok && !["succeeded","failed","rejected","canceled"].includes(responsePhase)))){
+      trackNavigationRequest(data.request_id, "선택 위치 이동", data.navigation);
+    }
+    if(r.status === 202 && data.pending){
+      notice(true, "이동 명령 전송됨 — 제어기 접수 확인 대기 · " +
+             gotoTarget.x.toFixed(2) + ", " + gotoTarget.y.toFixed(2) + " m", 6000);
+    }else if(r.ok && data.ok){
+      notice(true, "이동 명령이 접수되었습니다 — " +
+             gotoTarget.x.toFixed(2) + ", " + gotoTarget.y.toFixed(2) + " m" +
+             " (진행 중인 순찰 중지)", 5000);
+    }else{
+      /* 서버가 이유를 준다: 벽 위, 미탐사 구역, 토큰 없음 등.
+         이유를 안 보여주면 "눌렀는데 안 간다"로만 보인다. */
+      notice(true, "이동 실패 — " + (data.error || ("HTTP " + r.status)), 7000);
+    }
+  }catch(err){
+    notice(true, "이동 명령을 보내지 못했습니다 (연결 오류)", 7000);
+  }
+  $("goto-ask").hidden = true;
+  gotoTarget = null;
+});
+
+cv.addEventListener("wheel", e => {
+  e.preventDefault();
+  const r = cv.getBoundingClientRect();
+  zoomAt(e.clientX - r.left, e.clientY - r.top, e.deltaY < 0 ? 1.16 : 1/1.16);
+  unfollow();
+}, { passive:false });
+
+$("t-in").onclick  = () => zoomAt(VW/2, VH/2, 1.3);
+$("t-out").onclick = () => zoomAt(VW/2, VH/2, 1/1.3);
+$("t-fit").onclick = () => { fit(); unfollow(); };
+$("t-follow").onclick = () => {
+  V.follow = !V.follow;
+  $("t-follow").setAttribute("aria-pressed", String(V.follow));
+  if(V.follow){ S.focus = null; renderList(); }
+};
+for(const [id,key] of [["l-unknown","unknown"],["l-trail","trail"],["l-labels","labels"],
+                       ["l-grid","grid"],["l-zones","zones"],["l-route","route"]]){
+  $(id).onchange = e => { L[key] = e.target.checked; if(key === "unknown") paintRaster(); };
+}
+addEventListener("keydown", e => {
+  if(e.target.matches("input, button, textarea")) return;
+  const k = e.key.toLowerCase();
+  if(k === "f"){ fit(); unfollow(); }
+  if(k === "r"){ $("t-follow").click(); }
+  if(e.key === "+" || e.key === "=") zoomAt(VW/2, VH/2, 1.3);
+  if(e.key === "-" || e.key === "_") zoomAt(VW/2, VH/2, 1/1.3);
+});
+matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => setTimeout(paintRaster, 30));
+
+/* ---------- 데이터 ---------- */
+function pushTrail(x,y){
+  const last = S.trail[S.trail.length-1];
+  if(last && Math.hypot(x-last[0], y-last[1]) < CFG.trailMinStep) return;
+  S.trail.push([x,y]);
+  if(S.trail.length > CFG.trailMax) S.trail.shift();
+}
+
+let navigationTrack = null;
+let navigationPin = null;
+
+function applyNavigationStatus(rawNav, fromTrackedRequest){
+  if(!rawNav || typeof rawNav !== "object") return false;
+  const phase = String(rawNav.phase || rawNav.status || "unknown").toLowerCase().slice(0, 32);
+  const requestId = rawNav.request_id == null ? "" : String(rawNav.request_id).slice(0, 128);
+
+  if(!fromTrackedRequest){
+    if(navigationPin && Date.now() >= navigationPin.until) navigationPin = null;
+    const protectedId = navigationTrack ? navigationTrack.id
+                      : (navigationPin ? navigationPin.id : "");
+    /* /state는 시스템 전체의 최신 한 건이다. 내가 기다리는 request_id가 있으면
+       다른 관제자의 더 최신 명령으로 원 요청 결과를 덮지 않는다. */
+    if(protectedId && requestId !== protectedId) return false;
+  }
+
+  const distance = rawNav.distance_remaining == null
+    ? NaN : Number(rawNav.distance_remaining);
+  S.navigation = {
+    request_id: requestId,
+    command: String(rawNav.command || "").toLowerCase().slice(0, 32),
+    goal_type: String(rawNav.goal_type || "").toLowerCase().slice(0, 32),
+    phase,
+    state: String(rawNav.state || "").toLowerCase().slice(0, 32),
+    message: String(rawNav.message || rawNav.error || "").slice(0, 240),
+    distance_remaining: Number.isFinite(distance) ? Math.max(0, distance) : null,
+    age_sec: Math.max(0, num(rawNav.age_sec, Infinity)),
+  };
+
+  const key = requestId + ":" + phase;
+  if(key !== S.navigationKey){
+    S.navigationKey = key;
+    const freshResult = fromTrackedRequest || S.navigation.age_sec <= 5;
+    if(freshResult){
+      const isGoto = S.navigation.goal_type === "goto";
+      const isStop = S.navigation.command === "stop" || S.navigation.command === "pause";
+      if(phase === "succeeded" && isGoto){
+        notice(true, "목표 지점에 도착했습니다.", 5000);
+      }else if((phase === "failed" || phase === "rejected")
+               && (isGoto || isStop || fromTrackedRequest)){
+        const head = isStop ? "정지 실패"
+                   : (phase === "failed" ? "이동 실패" : "이동 명령 거부");
+        notice(true, head + (S.navigation.message ? " — " + S.navigation.message : ""), 7000);
+      }else if(phase === "canceled"){
+        notice(true, isStop ? "로봇 이동을 정지했습니다."
+                            : "이동 목표가 취소되었습니다.", 5000);
+      }
+    }
+  }
+  return true;
+}
+
+function trackNavigationRequest(requestId, label, initialStatus){
+  const id = String(requestId || "").slice(0, 128);
+  if(!id) return;
+  const token = {};
+  navigationPin = null;
+  navigationTrack = {
+    id, label:String(label || "명령"), token,
+    deadline:Date.now() + CFG.navigationTrackMs,
+  };
+  if(initialStatus) applyNavigationStatus(initialStatus, true);
+
+  const poll = async () => {
+    const track = navigationTrack;
+    if(!track || track.token !== token) return;
+    if(Date.now() >= track.deadline){
+      navigationTrack = null;
+      notice(true, track.label + " 결과 확인 시간이 초과되었습니다.", 7000);
+      return;
+    }
+    try{
+      const r = await fetch(apiURL("/navigation_status/" + encodeURIComponent(id)), {
+        cache:"no-store", signal:timeoutSignal(CFG.fetchTimeoutMs),
+      });
+      const data = await r.json().catch(() => ({}));
+      if(data.navigation) applyNavigationStatus(data.navigation, true);
+      if(r.status === 202 && data.pending){
+        setTimeout(poll, CFG.navigationPollMs);
+        return;
+      }
+      if(r.ok && data.complete){
+        navigationTrack = null;
+        navigationPin = { id, until:Date.now() + 6000 };
+        const phase = data.navigation && String(data.navigation.phase || "");
+        if(data.ok && phase === "accepted"){
+          notice(true, track.label + " — 제어기 접수 확인 완료", 5000);
+        }else if(!data.ok && !data.navigation){
+          notice(true, track.label + " 실패 — " + (data.error || "원인 불명"), 7000);
+        }
+        return;
+      }
+      if(r.status === 404){
+        navigationTrack = null;
+        notice(true, track.label + " 상태를 찾지 못했습니다 — 캐시 보존 시간이 지났습니다.", 7000);
+        return;
+      }
+    }catch(err){
+      /* 일시적인 조회 실패는 원 명령 실패가 아니다. 추적 마감까지 다시 확인한다. */
+    }
+    setTimeout(poll, CFG.navigationPollMs);
+  };
+  setTimeout(poll, CFG.navigationPollMs);
+}
+
+/* 서버 응답을 좌표/타입까지 정규화해서 받는다.
+   id 는 반드시 유한한 수로 만들고, 문자열은 절대 마크업으로 흘려보내지 않는다. */
+function applyState(st){
+  if(!st || typeof st !== "object") return;
+
+  const stamp = num(st.stamp, NaN);
+  const now = performance.now();
+
+  if(st.robot && isNum(+st.robot.x) && isNum(+st.robot.y)){
+    S.robot = { x:+st.robot.x, y:+st.robot.y, yaw:num(st.robot.yaw, 0) };
+    pushTrail(S.robot.x, S.robot.y);
+  }else{
+    /* 서버가 TF 만료를 robot:null 로 알리면 마지막 마커도 즉시 지운다.
+       낡은 좌표를 계속 보간하면 위치가 살아 있는 것처럼 보인다. */
+    S.robot = null;
+    S.shown = null;
+  }
+  S.poseAge = st.pose_age_sec != null && Number.isFinite(Number(st.pose_age_sec))
+    ? Number(st.pose_age_sec) : null;
+
+  /* 순찰 경로 — patrol_node 가 알려준 실제 웨이포인트 */
+  const routeSrc = Array.isArray(st.patrol_route) ? st.patrol_route : [];
+  const route = [];
+  for(const wp of routeSrc){
+    if(!wp || typeof wp !== "object") continue;
+    const x = Number(wp.x), y = Number(wp.y);
+    if(Number.isFinite(x) && Number.isFinite(y)) route.push({x, y});
+  }
+  S.route = route;
+  S.routeLoop = st.patrol_loop !== false;
+  S.status = (st.robot_status && typeof st.robot_status === "object") ? st.robot_status : null;
+
+  const acceptedNavigation = applyNavigationStatus(st.navigation, false);
+  if(!acceptedNavigation && !navigationTrack && !navigationPin){
+    S.navigation = null;
+  }
+
+  const src = Array.isArray(st.detections) ? st.detections : [];
+  const out = [];
+  for(let i = 0; i < src.length; i++){
+    const d = src[i];
+    if(!d || typeof d !== "object") continue;
+    const x = Number(d.x), y = Number(d.y);
+    if(!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    const seen = num(d.last_seen, NaN);
+    out.push({
+      id: Number.isFinite(Number(d.id)) ? Number(d.id) : i,
+      label: String(d.label == null ? "" : d.label).slice(0, 64),
+      x, y,
+      hit_count: clamp(num(d.hit_count, 1), 0, 9999),
+      age: (Number.isFinite(stamp) && Number.isFinite(seen)) ? Math.max(0, stamp - seen) : 0,
+      at: now
+    });
+  }
+  S.detections = out;
+  S.controlEnabled = st.control_enabled === true;
+  if(!S.controlEnabled){
+    $("goto-ask").hidden = true;
+    gotoTarget = null;
+  }
+  /* LiDAR 에 안 보이는 낮은 장애물(문턱·케이블 등). stall_monitor 가 "밀었는데
+     안 나갔다" 로 찾아낸 자리라, 지도에는 없고 사람이 치우러 가야 합니다. */
+  const blindSrc = Array.isArray(st.blind_obstacles) ? st.blind_obstacles : [];
+  const blind = [];
+  for(const item of blindSrc){
+    if(!item || typeof item !== "object") continue;
+    const x = Number(item.x), y = Number(item.y);
+    if(!Number.isFinite(x) || !Number.isFinite(y)) continue;
+    blind.push({x, y, radius: num(item.radius, 0.2), hits: num(item.hits, 1)});
+  }
+  S.blind = blind;
+  if(out.length) S.hasDet = true;
+  S.lastOk = Date.now();
+}
+
+function timeoutSignal(ms){
+  if(typeof AbortSignal !== "undefined" && AbortSignal.timeout) return AbortSignal.timeout(ms);
+  const c = new AbortController(); setTimeout(() => c.abort(), ms); return c.signal;
+}
+
+/* /map_data 검증 — 손상되거나 터무니없는 응답이 오면 기존 지도를 유지한다 */
+function acceptMap(m){
+  if(!m || typeof m !== "object" || !m.ready) return false;
+  if(m.version != null && String(m.version) === String(S.version)) return true;   // 변경 없음
+
+  const w = Number(m.w), h = Number(m.h), res = Number(m.res);
+  const ox = Number(m.ox), oy = Number(m.oy);
+
+  if(!Number.isInteger(w) || !Number.isInteger(h) || w < 1 || h < 1) throw new Error("지도 크기 이상: " + w + "x" + h);
+  if(w * h > CFG.maxCells) throw new Error("지도 셀 수 초과: " + (w*h));
+  if(!(res > 0) || res > CFG.maxRes) throw new Error("해상도 이상: " + res);
+  if(!Number.isFinite(ox) || !Number.isFinite(oy)) throw new Error("원점 이상");
+  if(typeof m.cells !== "string") throw new Error("cells 누락");
+
+  let bin;
+  try{ bin = atob(m.cells); }catch(e){ throw new Error("cells base64 디코딩 실패"); }
+  if(bin.length !== w * h) throw new Error("cells 길이 불일치: " + bin.length + " != " + (w*h));
+
+  const cells = new Uint8Array(bin.length);
+  for(let i = 0; i < bin.length; i++){
+    const v = bin.charCodeAt(i);
+    cells[i] = (v === FREE || v === WALL) ? v : UNKNOWN;   // 미지의 값은 미탐사로
+  }
+
+  S.grid = { w, h, res, ox, oy, cells };
+  S.version = m.version == null ? String(w)+"x"+String(h) : String(m.version);
+  buildRaster();
+  fit();
+  return true;
+}
+
+let mapBusy = false, stateBusy = false;
+let serverWaitingNotice = false;
+
+async function loadMap(){
+  if(mapBusy) return false;
+  mapBusy = true;
+  try{
+    // 이미 가진 지도 버전을 알려주면, 서버는 바뀐 게 없을 때 셀 데이터를 생략합니다.
+    const url = apiURL(CFG.api.map, S.version ? { v: S.version } : null);
+    const r = await fetch(url, { cache:"no-store", signal:timeoutSignal(CFG.fetchTimeoutMs) });
+    if(!r.ok) throw new Error("map HTTP " + r.status);
+    return acceptMap(await r.json());
+  }finally{ mapBusy = false; }
+}
+
+let zoneBusy = false;
+async function loadZones(){
+  if(zoneBusy) return;
+  zoneBusy = true;
+  try{
+    const url = apiURL(CFG.api.zones, S.zoneVersion ? { v: S.zoneVersion } : null);
+    const r = await fetch(url, { cache:"no-store", signal:timeoutSignal(CFG.fetchTimeoutMs) });
+    if(!r.ok) return;
+    const z = await r.json();
+    if(!z || !z.ready) return;
+    S.zones = Array.isArray(z.zones) ? z.zones : [];
+    if(z.cells){
+      /* 지도와 마찬가지로 버전이 같으면 서버가 cells 를 생략한다.
+         그때는 기존 라스터를 그대로 쓴다. */
+      S.zoneRaster = Uint8Array.from(atob(z.cells), c => c.charCodeAt(0));
+      S.zoneVersion = z.version;
+      buildZoneRaster();
+    }else if(z.version !== S.zoneVersion){
+      S.zoneVersion = z.version;
+    }
+  }catch(err){
+    /* 구역은 보조 정보다. 실패해도 지도/로봇 표시는 그대로 간다. */
+  }finally{ zoneBusy = false; }
+}
+
+async function tick(){
+  if(stateBusy) return;
+  stateBusy = true;
+  try{
+    const r = await fetch(apiURL(CFG.api.state), { cache:"no-store", signal:timeoutSignal(CFG.fetchTimeoutMs) });
+    if(!r.ok) throw new Error("state HTTP " + r.status);
+    const state = await r.json();
+    if(serverWaitingNotice){
+      serverWaitingNotice = false;
+      notice(false);
+    }
+    applyState(state);
+  }catch(err){
+    /* 값을 유지하되 updateHUD 가 두절 상태를 화면에 덮는다 */
+  }finally{ stateBusy = false; }
+}
+
+let noticeTimer = null;
+function notice(on, text, durationMs){
+  const n = $("notice");
+  if(noticeTimer !== null){
+    clearTimeout(noticeTimer);
+    noticeTimer = null;
+  }
+  n.hidden = !on;
+  if(on){
+    $("notice-t").textContent = text;
+    if(durationMs > 0){
+      noticeTimer = setTimeout(() => {
+        noticeTimer = null;
+        n.hidden = true;
+      }, durationMs);
+    }
+  }
+}
+
+async function boot(){
+  resize();
+  bodyFont = getComputedStyle(document.body).fontFamily || "sans-serif";
+
+  if(DEMO){
+    $("viewport").classList.add("demo");
+    notice(true, "데모 데이터입니다. 실제 현장 정보가 아닙니다.");
+    startDemo();
+  }else{
+    S.linkTried = true;
+    let ok = false;
+    try{ ok = await loadMap(); }
+    catch(err){ console.warn("[minimap] 지도 로드 실패:", err.message); }
+
+    if(!ok){
+      serverWaitingNotice = true;
+      notice(true, "서버(minimap_renderer.py) 응답을 기다리는 중입니다. 데모를 보려면 주소 끝에 ?demo=1 을 붙이세요.");
+    }
+
+    setInterval(tick, CFG.pollMs);
+    setInterval(() => {
+      loadMap()
+        .then(got => {
+          if(got && serverWaitingNotice){
+            serverWaitingNotice = false;
+            notice(false);
+          }
+        })
+        .catch(err => console.warn("[minimap] 지도 갱신 실패:", err.message));
+    }, CFG.mapCheckMs);
+    /* 구역은 지도가 바뀔 때만 갱신되므로 지도와 같은 주기로 충분하다. */
+    setInterval(loadZones, CFG.mapCheckMs);
+    loadZones();
+    tick();
+  }
+
+  setInterval(() => { updateHUD(); renderList(); }, 300);
+  updateHUD(); renderList(); draw();
+}
+
+/* ==========================================================================
+   데모 데이터 — ?demo=1 일 때만 실행.
+   digital_twin_1.world 의 랙 배치와 patrol_node.py 의 웨이포인트를 그대로 씁니다.
+   ========================================================================== */
+function startDemo(){
+  const res = 0.05, ox = -1.2, oy = -0.8;
+  const w = Math.round(12.6 / res), h = Math.round(9.0 / res);
+  const cells = new Uint8Array(w * h).fill(UNKNOWN);
+
+  const cell = (x,y,v) => {
+    const c = Math.round((x-ox)/res), r = Math.round((y-oy)/res);
+    if(c >= 0 && c < w && r >= 0 && r < h) cells[r*w + c] = v;
+  };
+  const box = (cx,cy,bw,bh,v) => {
+    for(let x = cx-bw/2; x <= cx+bw/2; x += res)
+      for(let y = cy-bh/2; y <= cy+bh/2; y += res) cell(x,y,v);
+  };
+
+  box(5, 3.5, 11.8, 7.8, FREE);
+  box(5,  7.5, 12, 0.2, WALL);
+  box(5, -0.5, 12, 0.2, WALL);
+  box(-1, 3.5, 0.2, 8.2, WALL);
+  box(11, 3.5, 0.2, 8.2, WALL);
+  for(const [rx,ry] of [[2,2],[2,5],[5,2],[5,5],[8,2],[8,5]]) box(rx, ry, 1, 1.5, WALL);
+
+  for(let i = 0; i < 900; i++){          // SLAM 지도처럼 가장자리를 갉아냄
+    const a = Math.random()*Math.PI*2, rr = 5.6 + Math.random()*1.2;
+    cell(5 + Math.cos(a)*rr, 3.5 + Math.sin(a)*rr*0.62, UNKNOWN);
+  }
+
+  S.grid = { w, h, res, ox, oy, cells };
+  S.version = "demo";
+  buildRaster(); fit();
+
+  const WP = [[0.5,3.5],[3.5,1.0],[3.5,6.0],[6.5,6.0],[6.5,1.0],[9.5,3.5]];
+  let seg = 0, t = 0;
+  const now = performance.now();
+
+  S.detections = [
+    { id:1, label:"fire",             x:7.50, y:2.05, hit_count:9, age:12, at:now },
+    { id:2, label:"no safety helmet", x:2.52, y:5.10, hit_count:6, age:41, at:now },
+    { id:3, label:"person",           x:5.52, y:4.85, hit_count:4, age:5,  at:now }
+  ];
+  S.hasDet = true;
+
+  setInterval(() => {
+    const a = WP[seg], b = WP[(seg+1) % WP.length];
+    t += 0.010;
+    if(t >= 1){ t = 0; seg = (seg+1) % WP.length; }
+    const x = a[0] + (b[0]-a[0])*t, y = a[1] + (b[1]-a[1])*t;
+    S.robot = { x, y, yaw: Math.atan2(b[1]-a[1], b[0]-a[0]) };
+    pushTrail(x, y);
+    S.lastOk = Date.now();
+    for(const d of S.detections){
+      if(Math.hypot(d.x-x, d.y-y) < 2.6){
+        d.age = 0; d.at = performance.now();
+        d.hit_count = Math.min(30, d.hit_count + 1);
+      }
+    }
+  }, 90);
+}
+
+boot();
+</script>
+</body>
+</html>

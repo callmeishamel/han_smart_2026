@@ -1,0 +1,22 @@
+# 데이터 플랫폼 & 관제 대시보드 (dashboard/pipeline/admin/edge_video/rag 공통)
+# 설치: pip install -r requirements.txt
+psycopg2-binary
+# 버전 하한을 박아둡니다. st.fragment(run_every=) 가 1.33 부터라, 그보다 낮으면
+# 대시보드가 전체 rerun fallback 으로 떨어져서 영상이 매번 다시 연결됩니다.
+# 상한은 메이저 하나로 끊습니다 — st.dataframe(use_container_width=) 가 1.49 에서
+# deprecated 되고 width="stretch" 로 대체되는 식의 변경이 실제로 일어났고,
+# 버전을 안 박아두면 시연 전날 새 PC에 설치했을 때 표가 깨집니다.
+# (대시보드는 두 인자를 버전 보고 골라 쓰므로 이 범위 안에서는 양쪽 다 됩니다.)
+streamlit>=1.33,<2
+pandas
+requests
+flask
+opencv-python
+numpy
+
+# edge_video/minimap_renderer.py 는 추가로 ROS2(rclpy, nav_msgs, geometry_msgs)가 필요합니다.
+# ROS2는 pip이 아니라 해당 배포판(예: humble) 설치 후 소스 환경에서 제공됩니다.
+
+# --- RAG 벡터 검색을 쓸 때만 (rag/embed_chunks.py --search) ---
+# sentence-transformers
+# pgvector
